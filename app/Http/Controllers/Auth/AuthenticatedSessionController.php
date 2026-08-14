@@ -28,6 +28,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        if ($user->peran === 'Admin') {
+            return redirect()->intended(route('pengurus.dashboard', absolute: false));
+        }
+
+        if ($user->peran === 'Ketua') {
+            return redirect()->intended(route('ketua.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
