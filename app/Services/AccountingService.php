@@ -2,121 +2,224 @@
 
 namespace App\Services;
 
-use App\Models\Coa;
-use App\Models\JurnalDetail;
 use App\Models\JurnalUmum;
-use Illuminate\Support\Facades\Auth;
+use App\Models\JurnalDetail;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Exception;
 
 class AccountingService
 {
     /**
-     * Memposting entri jurnal otomatis dengan validasi keseimbangan Debit = Kredit.
+     * Membuat Header dan Detail Jurnal Umum
      */
-    public function createJournalEntry(
-        string $tanggal,
-        ?string $idReferensi,
-        string $tipeTransaksi,
-        string $keterangan,
-        array $details,
-        bool $isReversal = false,
-        ?string $reversedRef = null
-    ): JurnalUmum {
-        return DB::transaction(function () use ($tanggal, $idReferensi, $tipeTransaksi, $keterangan, $details, $isReversal, $reversedRef) {
-            // 1. Validasi Keseimbangan Total Debit == Total Kredit
-            $totalDebit = 0.00;
-            $totalKredit = 0.00;
+    public function createJournalEntry(string $tanggal, ?string $referensi, string $tipeTransaksi, string $keterangan, array $details): JurnalUmum
+    {
+        return DB::transaction(function () use ($tanggal, $referensi, $tipeTransaksi, $keterangan, $details) {
+            // Validasi Keseimbangan (Debet = Kredit)
+            $totalDebit = 0;
+            $totalKredit = 0;
 
-            foreach ($details as $detail) {
-                if ($detail['posisi'] === 'Debit') {
-                    $totalDebit += (float) $detail['nominal'];
-                } elseif ($detail['posisi'] === 'Kredit') {
-                    $totalKredit += (float) $detail['nominal'];
+            foreach ($details as $row) {
+                if ($row['posisi'] === 'Debit') {
+                    $totalDebit += (float) $row['nominal'];
+                } elseif ($row['posisi'] === 'Kredit') {
+                    $totalKredit += (float) $row['nominal'];
                 }
             }
 
-            // Pembulatan 2 desimal untuk menghindari floating point error
             if (round($totalDebit, 2) !== round($totalKredit, 2)) {
-                throw new Exception("Transaksi Jurnal Tidak Balance! Total Debit (Rp " . number_format($totalDebit, 2) . ") != Total Kredit (Rp " . number_format($totalKredit, 2) . ")");
+                throw new Exception("Jurnal tidak seimbang: Total Debit (Rp " . number_format($totalDebit) . ") != Total Kredit (Rp " . number_format($totalKredit) . ").");
             }
 
-            // 2. Generate ID Jurnal Unik (Format: JRN-YYYYMMDD-XXXX)
-            $datePrefix = date('Ymd', strtotime($tanggal));
-            $lastJournal = JurnalUmum::where('id_jurnal', 'LIKE', "JRN-{$datePrefix}-%")
-                ->orderBy('id_jurnal', 'desc')
-                ->first();
+            // Generate ID Jurnal: JRN-YYYYMMDD-XXXX
+            $dateFormatted = Carbon::parse($tanggal)->format('Ymd');
+            $countToday = JurnalUmum::whereDate('tanggal', Carbon::parse($tanggal))->count() + 1;
+            $idJurnal = 'JRN-' . $dateFormatted . '-' . str_pad((string) $countToday, 4, '0', STR_PAD_LEFT);
 
-            $nextSequence = $lastJournal ? ((int) substr($lastJournal->id_jurnal, -4)) + 1 : 1;
-            $idJurnal = sprintf("JRN-%s-%04d", $datePrefix, $nextSequence);
-
-            // 3. Simpan Header Jurnal
-            $header = JurnalUmum::create([
+            // 1. Simpan Header Jurnal
+            $jurnal = JurnalUmum::create([
                 'id_jurnal' => $idJurnal,
                 'tanggal' => $tanggal,
-                'id_referensi' => $idReferensi,
+                'referensi_transaksi' => $referensi,
                 'tipe_transaksi' => $tipeTransaksi,
                 'keterangan' => $keterangan,
-                'is_reversal' => $isReversal,
-                'reversed_ref' => $reversedRef,
-                'created_by' => Auth::check() ? Auth::user()->username : 'system',
+                'is_reversal' => false,
             ]);
 
-            // 4. Simpan Line Details Jurnal
-            foreach ($details as $detail) {
-                // Pastikan akun terdaftar di CoA
-                $coaExists = Coa::where('kode_akun', $detail['kode_akun'])->exists();
-                if (!$coaExists) {
-                    throw new Exception("Kode Akun [{$detail['kode_akun']}] tidak ditemukan pada Chart of Accounts!");
-                }
-
+            // 2. Simpan Detail Jurnal
+            foreach ($details as $item) {
                 JurnalDetail::create([
-                    'id_jurnal' => $header->id_jurnal,
-                    'kode_akun' => $detail['kode_akun'],
-                    'posisi' => $detail['posisi'],
-                    'nominal' => $detail['nominal'],
+                    'id_jurnal' => $idJurnal,
+                    'kode_akun' => $item['kode_akun'],
+                    'posisi' => $item['posisi'],
+                    'nominal' => $item['nominal'],
                 ]);
             }
 
-            return $header;
+            return $jurnal;
         });
     }
 
     /**
-     * Eksekusi Reversal Engine: Membalikkan posisi Debit/Kredit jurnal lama.
+     * Membalik jurnal (Reversal) secara otomatis dengan menukar Debit <-> Kredit
      */
-    public function reverseJournal(string $idJurnalLama, string $alasanReversal): JurnalUmum
+    public function reverseJournal(string $idJurnal, string $alasan = 'Koreksi Transaksi'): JurnalUmum
     {
-        return DB::transaction(function () use ($idJurnalLama, $alasanReversal) {
-            $jurnalLama = JurnalUmum::with('details')->findOrFail($idJurnalLama);
+        return DB::transaction(function () use ($idJurnal, $alasan) {
+            $originalJournal = JurnalUmum::with('details')->findOrFail($idJurnal);
 
-            if ($jurnalLama->is_reversal) {
-                throw new Exception("Jurnal [{$idJurnalLama}] sudah pernah direversal!");
+            if ($originalJournal->is_reversal) {
+                throw new Exception("Jurnal ini sudah pernah di-reversal sebelumnya.");
             }
 
-            // Susun detail kebalikan (180 derajat)
+            // Tandai jurnal lama sebagai reversed
+            $originalJournal->update(['is_reversal' => true]);
+
+            // Siapkan detail pembalik (Tukar Debit jadi Kredit, Kredit jadi Debit)
             $reversedDetails = [];
-            foreach ($jurnalLama->details as $detail) {
+            foreach ($originalJournal->details as $item) {
                 $reversedDetails[] = [
-                    'kode_akun' => $detail->kode_akun,
-                    'posisi' => $detail->posisi === 'Debit' ? 'Kredit' : 'Debit',
-                    'nominal' => $detail->nominal,
+                    'kode_akun' => $item->kode_akun,
+                    'posisi' => $item->posisi === 'Debit' ? 'Kredit' : 'Debit',
+                    'nominal' => $item->nominal,
                 ];
             }
 
-            // Tandai jurnal lama
-            $jurnalLama->update(['is_reversal' => true]);
-
-            // Terbitkan jurnal pembalik baru
+            // Buat entri jurnal pembalik baru
             return $this->createJournalEntry(
-                now()->format('Y-m-d'),
-                $jurnalLama->id_referensi,
+                Carbon::now()->format('Y-m-d'),
+                $originalJournal->id_jurnal,
                 'Reversal',
-                "REVERSAL: " . $alasanReversal . " (Ref: {$jurnalLama->id_jurnal})",
-                $reversedDetails,
-                true,
-                $jurnalLama->id_jurnal
+                "Reversal {$originalJournal->id_jurnal}: {$alasan} ({$originalJournal->keterangan})",
+                $reversedDetails
             );
         });
+    }
+    public function getTrialBalance(?string $endDate = null): array
+    {
+        $endDate = $endDate ?? Carbon::now()->toDateString();
+        $coaList = \App\Models\Coa::orderBy('kode_akun', 'asc')->get();
+
+        $rows = [];
+        $totalDebit = 0.00;
+        $totalKredit = 0.00;
+
+        foreach ($coaList as $coa) {
+            $mutasi = \App\Models\JurnalDetail::where('kode_akun', $coa->kode_akun)
+                ->whereHas('header', function ($q) use ($endDate) {
+                    $q->whereDate('tanggal', '<=', $endDate);
+                })
+                ->get();
+
+            $sumDebit = (float) $mutasi->where('posisi', 'Debit')->sum('nominal');
+            $sumKredit = (float) $mutasi->where('posisi', 'Kredit')->sum('nominal');
+
+            $saldoAkhir = 0.00;
+            $posisiDebit = 0.00;
+            $posisiKredit = 0.00;
+
+            if ($coa->saldo_normal === 'Debit') {
+                $saldoAkhir = $sumDebit - $sumKredit;
+                if ($saldoAkhir >= 0) {
+                    $posisiDebit = $saldoAkhir;
+                } else {
+                    $posisiKredit = abs($saldoAkhir);
+                }
+            } else {
+                $saldoAkhir = $sumKredit - $sumDebit;
+                if ($saldoAkhir >= 0) {
+                    $posisiKredit = $saldoAkhir;
+                } else {
+                    $posisiDebit = abs($saldoAkhir);
+                }
+            }
+
+            $totalDebit += $posisiDebit;
+            $totalKredit += $posisiKredit;
+
+            $rows[] = [
+                'kode_akun' => $coa->kode_akun,
+                'nama_akun' => $coa->nama_akun,
+                'tipe_akun' => $coa->tipe_akun ?? '-',
+                'saldo_normal' => $coa->saldo_normal,
+                'debit' => $posisiDebit,
+                'kredit' => $posisiKredit,
+            ];
+        }
+
+        return [
+            'rows' => $rows,
+            'total_debit' => $totalDebit,
+            'total_kredit' => $totalKredit,
+            'is_balanced' => round($totalDebit, 2) === round($totalKredit, 2),
+            'end_date' => $endDate
+        ];
+    }
+
+    /**
+     * Menghitung Laporan Laba Rugi / Sisa Hasil Usaha (SHU)
+     */
+    public function getIncomeStatement(string $startDate, string $endDate): array
+    {
+        // 1. Pendapatan (Akun diawali '4', e.g. 401 Pendapatan Bunga Pinjaman)
+        $pendapatanDetails = \App\Models\JurnalDetail::with('coa')
+            ->where('kode_akun', 'like', '4%')
+            ->whereHas('header', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('tanggal', [$startDate, $endDate]);
+            })
+            ->get();
+
+        $pendapatanGrouped = [];
+        $totalPendapatan = 0.00;
+
+        foreach ($pendapatanDetails as $d) {
+            $nom = $d->posisi === 'Kredit' ? (float) $d->nominal : -(float) $d->nominal;
+            if (!isset($pendapatanGrouped[$d->kode_akun])) {
+                $pendapatanGrouped[$d->kode_akun] = [
+                    'kode_akun' => $d->kode_akun,
+                    'nama_akun' => $d->coa->nama_akun ?? 'Pendapatan Lain',
+                    'nominal' => 0.00
+                ];
+            }
+            $pendapatanGrouped[$d->kode_akun]['nominal'] += $nom;
+            $totalPendapatan += $nom;
+        }
+
+        // 2. Beban Operasional (Akun diawali '5', e.g. 501 Beban Operasional)
+        $bebanDetails = \App\Models\JurnalDetail::with('coa')
+            ->where('kode_akun', 'like', '5%')
+            ->whereHas('header', function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('tanggal', [$startDate, $endDate]);
+            })
+            ->get();
+
+        $bebanGrouped = [];
+        $totalBeban = 0.00;
+
+        foreach ($bebanDetails as $d) {
+            $nom = $d->posisi === 'Debit' ? (float) $d->nominal : -(float) $d->nominal;
+            if (!isset($bebanGrouped[$d->kode_akun])) {
+                $bebanGrouped[$d->kode_akun] = [
+                    'kode_akun' => $d->kode_akun,
+                    'nama_akun' => $d->coa->nama_akun ?? 'Beban Operasional',
+                    'nominal' => 0.00
+                ];
+            }
+            $bebanGrouped[$d->kode_akun]['nominal'] += $nom;
+            $totalBeban += $nom;
+        }
+
+        $shuBersih = $totalPendapatan - $totalBeban;
+
+        return [
+            'pendapatan' => array_values($pendapatanGrouped),
+            'total_pendapatan' => $totalPendapatan,
+            'beban' => array_values($bebanGrouped),
+            'total_beban' => $totalBeban,
+            'shu_bersih' => $shuBersih,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ];
     }
 }

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Angsuran - Koperasi Merah Putih</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/2.1.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50/60 antialiased">
+    <div class="flex min-h-screen">
+        @include('layouts.sidebar-ketua')
+
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Navbar Header -->
+            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
+                <div>
+                    <div class="flex items-center space-x-2 text-xs text-slate-400">
+                        <span>Koperasi Merah Putih</span>
+                        <span>&rsaquo;</span>
+                        <span class="text-slate-600 font-medium">Angsuran</span>
+                    </div>
+                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Angsuran</h2>
+                </div>
+
+                <div class="flex items-center space-x-5">
+                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
+                        <i class="fi fi-rr-search flex items-center text-sm"></i>
+                    </button>
+                    <div class="h-6 w-px bg-slate-100"></div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                        </div>
+                        <div class="text-left">
+                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
+                            <p class="text-[10px] text-slate-400">Ketua Koperasi</p>
+                        </div>
+                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
+                            @csrf
+                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
+                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-8 space-y-6">
+                <!-- Title Header (Tanpa Tombol Catat) -->
+                <div>
+                    <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Manajemen Angsuran</h1>
+                    <p class="text-xs text-slate-500 mt-1">Pantau pembayaran angsuran pinjaman anggota.</p>
+                </div>
+
+                <!-- 4 Stat Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Angsuran Hari Ini -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Angsuran hari ini</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">{{ number_format($angsuranHariIni) }}</h3>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i class="fi fi-rr-receipt text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Total Terkumpul -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total terkumpul</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">
+                                @if($totalTerkumpul >= 1000000000)
+                                    Rp {{ number_format($totalTerkumpul / 1000000000, 2, ',', '.') }} M
+                                @else
+                                    Rp {{ number_format($totalTerkumpul / 1000000, 1, ',', '.') }} Jt
+                                @endif
+                            </h3>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fi fi-rr-comment-dollar text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Outstanding -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Outstanding</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">
+                                @if($outstanding >= 1000000000)
+                                    Rp {{ number_format($outstanding / 1000000000, 2, ',', '.') }} M
+                                @else
+                                    Rp {{ number_format($outstanding / 1000000, 1, ',', '.') }} Jt
+                                @endif
+                            </h3>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fi fi-rr-chart-line-down text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pembayaran Terlambat -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Pembayaran terlambat</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">{{ number_format($pembayaranTerlambat) }}</h3>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                            <i class="fi fi-rr-exclamation text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Card Container -->
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <form method="GET" action="{{ route('ketua.angsuran.index') }}" class="flex-1 w-full flex items-center gap-2">
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fi fi-rr-search text-xs flex items-center"></i>
+                                </div>
+                                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari anggota atau nomor pinjaman..." class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
+                            </div>
+                            <button type="submit" class="px-3.5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center space-x-2 shadow-sm">
+                                <i class="fi fi-rr-filter text-xs text-slate-400"></i>
+                                <span>Filter</span>
+                            </button>
+                        </form>
+                        <button type="button" class="w-full sm:w-auto px-3.5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2 shadow-sm">
+                            <i class="fi fi-rr-download text-xs text-slate-400"></i>
+                            <span>Export</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    <th class="py-3.5 px-6">Tanggal</th>
+                                    <th class="py-3.5 px-6">No. Angsuran</th>
+                                    <th class="py-3.5 px-6">Anggota</th>
+                                    <th class="py-3.5 px-6">Pinjaman</th>
+                                    <th class="py-3.5 px-6">Pokok</th>
+                                    <th class="py-3.5 px-6">Bunga</th>
+                                    <th class="py-3.5 px-6">Total Bayar</th>
+                                    <th class="py-3.5 px-6">Sisa</th>
+                                    <th class="py-3.5 px-6 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-xs">
+                                @forelse($angsuranList as $item)
+                                    <tr class="hover:bg-slate-50/60 transition">
+                                        <td class="py-4 px-6 text-slate-600 font-medium">
+                                            {{ $item->created_at->translatedFormat('d F Y') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-400 font-medium">
+                                            {{ $item->id_angsuran }}
+                                        </td>
+                                        <td class="py-4 px-6 font-bold text-slate-800">
+                                            {{ $item->anggota->nama ?? '-' }}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-500 font-medium">
+                                            {{ $item->id_pinjam }}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600">
+                                            Rp {{ number_format($item->bayar_pokok, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600">
+                                            Rp {{ number_format($item->bayar_bunga, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-4 px-6 font-bold text-slate-800">
+                                            Rp {{ number_format($item->total_bayar, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600 font-medium">
+                                            Rp {{ number_format($item->pinjaman->sisa_tagihan ?? 0, 0, ',', '.') }}
+                                        </td>
+                                        <td class="py-4 px-6 text-center">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                Selesai
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="9" class="py-8 text-center text-slate-400">
+                                            Tidak ada riwayat transaksi angsuran.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if($angsuranList->hasPages())
+                        <div class="p-4 border-t border-slate-100 bg-white">
+                            {{ $angsuranList->links() }}
+                        </div>
+                    @endif
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

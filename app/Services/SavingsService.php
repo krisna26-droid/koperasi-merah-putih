@@ -18,19 +18,19 @@ class SavingsService
     }
 
     /**
-     * Memproses setoran simpanan dan membuat jurnal otomatis.
+     * Memproses setoran simpanan dan otomatis memicu pencatatan jurnal
      */
     public function processDeposit(string $idAnggota, string $jenisSimpanan, float $nominal): Simpanan
     {
         return DB::transaction(function () use ($idAnggota, $jenisSimpanan, $nominal) {
-            // 1. Validasi Keaktifan Anggota
+            // 1. Validasi Anggota
             $anggota = Anggota::findOrFail($idAnggota);
             if ($anggota->status !== 'Aktif') {
-                throw new Exception("Transaksi ditolak: Anggota [{$idAnggota}] berstatus tidak aktif ({$anggota->status})!");
+                throw new Exception("Transaksi ditolak: Anggota [{$idAnggota}] tidak berstatus Aktif!");
             }
 
             if ($nominal <= 0) {
-                throw new Exception("Nominal setoran simpanan harus lebih besar dari 0!");
+                throw new Exception("Nominal setoran harus lebih besar dari 0!");
             }
 
             // 2. Generate ID Simpanan Unik (SMP-YYYYMMDD-XXXX)
@@ -42,7 +42,7 @@ class SavingsService
             $nextSequence = $lastRecord ? ((int) substr($lastRecord->id_simpanan, -4)) + 1 : 1;
             $idSimpanan = sprintf("SMP-%s-%04d", $datePrefix, $nextSequence);
 
-            // 3. Simpan Record Simpanan Operasional
+            // 3. Simpan Record Simpanan
             $simpanan = Simpanan::create([
                 'id_simpanan' => $idSimpanan,
                 'id_anggota' => $idAnggota,
@@ -52,15 +52,15 @@ class SavingsService
                 'created_by' => Auth::check() ? Auth::user()->username : 'system',
             ]);
 
-            // 4. Map Pos Akun Kredit Berdasarkan Jenis Simpanan
+            // 4. Pos Akun Kredit (Simpanan Pokok: 301 / Wajib: 302 / Sukarela: 303 atau 201/202/203 sesuai CoA Anda)
             $kodeAkunKredit = match ($jenisSimpanan) {
-                'Pokok' => '201',
-                'Wajib' => '202',
-                'Sukarela' => '203',
+                'Pokok' => '301',
+                'Wajib' => '302',
+                'Sukarela' => '303',
                 default => throw new Exception("Jenis simpanan tidak valid!"),
             };
 
-            // 5. Trigger Auto-Journaling (Kas [101] Debit, Simpanan Kredit)
+            // 5. Eksekusi Jurnal: Kas (101) Debit, Simpanan Kredit
             $journalDetails = [
                 ['kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $nominal],
                 ['kode_akun' => $kodeAkunKredit, 'posisi' => 'Kredit', 'nominal' => $nominal],
@@ -74,7 +74,6 @@ class SavingsService
                 $journalDetails
             );
 
-            // 6. Tandai Terjurnal
             $simpanan->update(['is_jurnaled' => true]);
 
             return $simpanan;

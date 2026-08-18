@@ -37,23 +37,41 @@
             <div>
                 <span class="px-3 text-[10px] font-bold text-slate-400 tracking-wider uppercase">OPERASIONAL</span>
                 <div class="mt-2 space-y-1">
-                    <a href="#" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-users flex items-center text-sm"></i>
-                        <span>Anggota</span>
+                    <a href="{{ route('ketua.anggota.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.anggota.*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-users flex items-center text-sm"></i>
+                            <span>Anggota</span>
+                        </div>
+                        @if(request()->routeIs('ketua.anggota.*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
-                    <a href="#" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-envelope flex items-center text-sm"></i>
-                        <span>Simpanan</span>
+                    <a href="{{ route('ketua.simpanan.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.simpanan.*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-envelope flex items-center text-sm"></i>
+                            <span>Simpanan</span>
+                        </div>
+                        @if(request()->routeIs('ketua.simpanan.*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
-                    <a href="{{ route('ketua.approval.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all {{ request()->routeIs('ketua.approval.*') ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'text-slate-500 hover:bg-slate-50' }}">
+                    <a href="{{ route('ketua.pinjaman.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.pinjaman.*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
                         <div class="flex items-center space-x-2.5">
                             <i class="fi fi-rr-dollar flex items-center text-sm"></i>
                             <span>Pinjaman</span>
                         </div>
+                        @if(request()->routeIs('ketua.pinjaman.*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
-                    <a href="#" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-receipt flex items-center text-sm"></i>
-                        <span>Angsuran</span>
+                    <a href="{{ route('ketua.angsuran.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.angsuran.*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-receipt flex items-center text-sm"></i>
+                            <span>Angsuran</span>
+                        </div>
+                        @if(request()->routeIs('ketua.angsuran.*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
                 </div>
             </div>
@@ -62,13 +80,23 @@
             <div>
                 <span class="px-3 text-[10px] font-bold text-slate-400 tracking-wider uppercase">AKUNTANSI</span>
                 <div class="mt-2 space-y-1">
-                    <a href="{{ route('ketua.laporan.jurnal') }}" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-book-alt flex items-center text-sm"></i>
-                        <span>Jurnal Umum</span>
+                    <a href="{{ route('ketua.laporan.jurnal') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.laporan.jurnal*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-book-alt flex items-center text-sm"></i>
+                            <span>Jurnal Umum</span>
+                        </div>
+                        @if(request()->routeIs('ketua.laporan.jurnal*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
-                    <a href="{{ route('ketua.laporan.buku-besar') }}" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-document flex items-center text-sm"></i>
-                        <span>Buku Besar</span>
+                    <a href="{{ route('ketua.laporan.buku-besar') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.laporan.buku-besar*') ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-document flex items-center text-sm"></i>
+                            <span>Buku Besar</span>
+                        </div>
+                        @if(request()->routeIs('ketua.laporan.buku-besar*'))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
                 </div>
             </div>
@@ -77,9 +105,14 @@
             <div>
                 <span class="px-3 text-[10px] font-bold text-slate-400 tracking-wider uppercase">ANALISIS</span>
                 <div class="mt-2 space-y-1">
-                    <a href="#" class="flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
-                        <i class="fi fi-rr-chart-histogram flex items-center text-sm"></i>
-                        <span>Laporan</span>
+                    <a href="{{ route('ketua.laporan.index') }}" class="flex items-center justify-between px-3 py-2 text-xs font-semibold rounded-xl transition-all {{ request()->routeIs('ketua.laporan.index') || (request()->routeIs('ketua.laporan.*') && !request()->routeIs('ketua.laporan.jurnal*') && !request()->routeIs('ketua.laporan.buku-besar*')) ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:bg-slate-50' }}">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="fi fi-rr-chart-histogram flex items-center text-sm"></i>
+                            <span>Laporan</span>
+                        </div>
+                        @if(request()->routeIs('ketua.laporan.index') || (request()->routeIs('ketua.laporan.*') && !request()->routeIs('ketua.laporan.jurnal*') && !request()->routeIs('ketua.laporan.buku-besar*')))
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        @endif
                     </a>
                 </div>
             </div>
@@ -88,7 +121,7 @@
 
     <!-- Bottom Profile Status -->
     <div class="pt-4 border-t border-slate-100">
-        <a href="#" class="flex items-center space-x-2.5 px-3 py-2 mb-3 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl">
+        <a href="{{ route('profile.edit') }}" class="flex items-center space-x-2.5 px-3 py-2 mb-3 text-xs font-medium text-slate-500 hover:bg-slate-50 rounded-xl transition-all {{ request()->routeIs('profile.*') ? 'bg-emerald-50 text-emerald-600' : '' }}">
             <i class="fi fi-rr-settings flex items-center text-sm"></i>
             <span>Pengaturan</span>
         </a>

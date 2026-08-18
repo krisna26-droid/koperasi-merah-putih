@@ -19,17 +19,15 @@ class LoanService
     }
 
     /**
-     * Memproses Pengajuan Pinjaman Baru (Dengan Single Active Loan Pre-Check).
+     * 1. Pengajuan Pinjaman Baru
      */
     public function createApplication(string $idAnggota, float $jumlahPinjam, int $tenor): Pinjaman
     {
-        // 1. Validasi Keaktifan Anggota
         $anggota = Anggota::findOrFail($idAnggota);
         if ($anggota->status !== 'Aktif') {
-            throw new Exception("Pengajuan ditolak: Anggota [{$idAnggota}] berstatus tidak aktif!");
+            throw new Exception("Pengajuan ditolak: Anggota [{$idAnggota}] tidak berstatus Aktif!");
         }
 
-        // 2. ATURAN SINGLE ACTIVE LOAN (BR-002): Cek Pinjaman Aktif
         $hasActiveLoan = Pinjaman::where('id_anggota', $idAnggota)
             ->where('status', 'Berjalan')
             ->exists();
@@ -42,12 +40,10 @@ class LoanService
             throw new Exception("Jumlah pinjaman dan tenor harus lebih besar dari 0!");
         }
 
-        // 3. KALKULASI FLAT 1.5% PER BULAN (BR-001)
         $rateBunga = 1.50; // Flat 1.5%
         $pokokPerBulan = round($jumlahPinjam / $tenor, 2);
         $bungaPerBulan = round($jumlahPinjam * ($rateBunga / 100), 2);
 
-        // 4. Generate ID Pinjam Unik (PNJ-YYYYMMDD-XXXX)
         $datePrefix = date('Ymd');
         $lastRecord = Pinjaman::where('id_pinjam', 'LIKE', "PNJ-{$datePrefix}-%")
             ->orderBy('id_pinjam', 'desc')
@@ -56,7 +52,6 @@ class LoanService
         $nextSequence = $lastRecord ? ((int) substr($lastRecord->id_pinjam, -4)) + 1 : 1;
         $idPinjam = sprintf("PNJ-%s-%04d", $datePrefix, $nextSequence);
 
-        // 5. Simpan Record Pengajuan
         return Pinjaman::create([
             'id_pinjam' => $idPinjam,
             'id_anggota' => $idAnggota,
@@ -73,35 +68,36 @@ class LoanService
     }
 
     /**
-     * Persetujuan / Penolakan Pinjaman oleh Ketua Koperasi.
+     * 2. Persetujuan / Penolakan Pinjaman oleh Ketua Koperasi
      */
     public function processApproval(string $idPinjam, string $action): Pinjaman
     {
         return DB::transaction(function () use ($idPinjam, $action) {
-            $pinjaman = Pinjaman::findOrFail($idPinjam);
+            $pinjaman = Pinjaman::with('anggota')->findOrFail($idPinjam);
 
             if ($pinjaman->status !== 'Pengajuan') {
-                throw new Exception("Pinjaman [{$idPinjam}] tidak berstatus 'Pengajuan'!");
+                throw new Exception("Pinjaman [{$idPinjam}] sudah tidak berstatus 'Pengajuan'!");
             }
+
+            $userApprover = Auth::check() ? Auth::user()->username : 'ketua';
 
             if ($action === 'Reject') {
                 $pinjaman->update([
                     'status' => 'Ditolak',
-                    'approved_by' => Auth::check() ? Auth::user()->username : 'ketua',
+                    'approved_by' => $userApprover,
                     'approved_at' => now(),
                 ]);
                 return $pinjaman;
             }
 
             if ($action === 'Approve') {
-                // Ubah status ke Disetujui & langsung eksekusi Pencairan (Disbursal)
                 $pinjaman->update([
                     'status' => 'Berjalan',
-                    'approved_by' => Auth::check() ? Auth::user()->username : 'ketua',
+                    'approved_by' => $userApprover,
                     'approved_at' => now(),
                 ]);
 
-                // Auto-Journal Pencairan Pinjaman (Debit Piutang 103, Kredit Kas 101)
+                // Auto-Journal Pencairan Pinjaman: Piutang Pinjaman (103) Debit, Kas (101) Kredit
                 $journalDetails = [
                     ['kode_akun' => '103', 'posisi' => 'Debit', 'nominal' => $pinjaman->jumlah_pinjam],
                     ['kode_akun' => '101', 'posisi' => 'Kredit', 'nominal' => $pinjaman->jumlah_pinjam],
@@ -111,8 +107,9 @@ class LoanService
                     now()->format('Y-m-d'),
                     $pinjaman->id_pinjam,
                     'Pinjaman',
-                    "Pencairan Pinjaman a.n {$pinjaman->anggota->nama} ({$pinjaman->id_pinjam})",
-                    $journalDetails
+                    "Pencairan Pinjaman {$pinjaman->id_pinjam} a.n {$pinjaman->anggota->nama}",
+                    $journalDetails,
+                    $userApprover
                 );
 
                 $pinjaman->update(['is_jurnaled' => true]);
@@ -120,12 +117,12 @@ class LoanService
                 return $pinjaman;
             }
 
-            throw new Exception("Aksi approval tidak dikenal!");
+            throw new Exception("Aksi persetujuan tidak valid!");
         });
     }
 
     /**
-     * Pembayaran Angsuran Kredit dengan Penjurnalan Split 3-Baris.
+     * 3. Pembayaran Angsuran Kredit
      */
     public function processInstallmentPayment(string $idPinjam): Angsuran
     {
@@ -140,11 +137,9 @@ class LoanService
             $bayarBunga = $pinjaman->bunga_per_bulan;
             $totalBayar = round($bayarPokok + $bayarBunga, 2);
 
-            // Hitung urutan angsuran ke-N
             $lastAngsuranCount = Angsuran::where('id_pinjam', $idPinjam)->count();
             $angsuranKe = $lastAngsuranCount + 1;
 
-            // Generate ID Angsuran Unik (ANG-YYYYMMDD-XXXX)
             $datePrefix = date('Ymd');
             $lastRecord = Angsuran::where('id_angsuran', 'LIKE', "ANG-{$datePrefix}-%")
                 ->orderBy('id_angsuran', 'desc')
@@ -153,7 +148,7 @@ class LoanService
             $nextSequence = $lastRecord ? ((int) substr($lastRecord->id_angsuran, -4)) + 1 : 1;
             $idAngsuran = sprintf("ANG-%s-%04d", $datePrefix, $nextSequence);
 
-            // 1. Simpan Transaksi Angsuran
+            // Simpan Data Angsuran
             $angsuran = Angsuran::create([
                 'id_angsuran' => $idAngsuran,
                 'id_pinjam' => $idPinjam,
@@ -166,19 +161,18 @@ class LoanService
                 'created_by' => Auth::check() ? Auth::user()->username : 'system',
             ]);
 
-            // 2. Potong Sisa Tagihan Pokok
+            // Update Sisa Tagihan Pinjaman
             $sisaTagihanBaru = max(0.00, round($pinjaman->sisa_tagihan - $bayarPokok, 2));
             $pinjaman->sisa_tagihan = $sisaTagihanBaru;
 
-            // Auto-Pelunasan (BR-008)
-            if ($sisaTagihanBaru == 0.00) {
+            if ($sisaTagihanBaru <= 0.00) {
                 $pinjaman->status = 'Lunas';
             }
             $pinjaman->save();
 
-            // 3. JURNAL SPLIT 3-BARIS (BR-004)
+            // Auto-Journal Angsuran: Kas (101) Debit, Piutang (103) Kredit, Pendapatan Bunga (401) Kredit
             $journalDetails = [
-                ['kode_akun' => '101', 'posisi' => 'Debit',  'nominal' => $totalBayar],
+                ['kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $totalBayar],
                 ['kode_akun' => '103', 'posisi' => 'Kredit', 'nominal' => $bayarPokok],
                 ['kode_akun' => '401', 'posisi' => 'Kredit', 'nominal' => $bayarBunga],
             ];
