@@ -1,8 +1,18 @@
-<x-app-layout>
-    <div class="flex min-h-screen bg-slate-100">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persetujuan Pinjaman · {{ $cooperativeSettings->name }}</title>
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.1.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body class="bg-slate-50/60 antialiased">
+    <div class="flex min-h-screen">
         @include('layouts.sidebar-ketua')
-        <main class="flex-1 p-8">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Persetujuan Permohonan Kredit</h2>
+        <div class="flex min-w-0 flex-1 flex-col">
+            <x-page-header title="Persetujuan Permohonan Kredit" section="Pinjaman" />
+            <main class="flex-1 space-y-6 p-6 lg:p-8">
 
             @if(session('success'))
                 <div class="mb-4 p-4 bg-emerald-100 border border-emerald-400 text-emerald-700 rounded-md">
@@ -51,6 +61,8 @@
                     </tbody>
                 </table>
             </div>
-        </main>
+            </main>
+        </div>
     </div>
-</x-app-layout>
+</body>
+</html>

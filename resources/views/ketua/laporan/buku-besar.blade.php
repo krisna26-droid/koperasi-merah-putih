@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buku Besar - Koperasi Merah Putih</title>
+    <title>Buku Besar - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,38 +19,7 @@
         @include('layouts.sidebar-ketua')
 
         <div class="flex-1 flex flex-col min-w-0">
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
-                <div>
-                    <div class="flex items-center space-x-2 text-xs text-slate-400">
-                        <span>Koperasi Merah Putih</span>
-                        <span>&rsaquo;</span>
-                        <span class="text-slate-600 font-medium">Buku Besar</span>
-                    </div>
-                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Buku Besar</h2>
-                </div>
-
-                <div class="flex items-center space-x-5">
-                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-                        <i class="fi fi-rr-search flex items-center text-sm"></i>
-                    </button>
-                    <div class="h-6 w-px bg-slate-100"></div>
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        </div>
-                        <div class="text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] text-slate-400">Ketua Koperasi</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
-                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Buku Besar" section="Laporan" />
 
             <main class="p-8 space-y-6">
                 <div class="flex items-center justify-between">
@@ -60,10 +29,7 @@
                     </div>
 
                     <div class="flex items-center space-x-3">
-                        <button type="button" onclick="window.print()" class="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition flex items-center space-x-2 shadow-sm">
-                            <i class="fi fi-rr-print text-xs"></i>
-                            <span>Cetak</span>
-                        </button>
+                        <x-export-buttons report="buku-besar" />
                     </div>
                 </div>
 
@@ -94,7 +60,7 @@
                     </form>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold text-slate-400">Saldo awal</p>
@@ -105,6 +71,14 @@
                         <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                             <i class="fi fi-rr-bank text-xl"></i>
                         </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Total kredit periode</p>
+                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">Rp {{ number_format($totalKreditPeriode, 0, ',', '.') }}</h3>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fi fi-rr-arrow-up-right text-xl"></i></div>
                     </div>
 
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
@@ -150,6 +124,7 @@
                                     <th class="py-3.5 px-6">Tanggal</th>
                                     <th class="py-3.5 px-6">Referensi</th>
                                     <th class="py-3.5 px-6">Keterangan</th>
+                                    <th class="py-3.5 px-6">Dicatat oleh</th>
                                     <th class="py-3.5 px-6 text-right">Debit</th>
                                     <th class="py-3.5 px-6 text-right">Kredit</th>
                                     <th class="py-3.5 px-6 text-right">Saldo</th>
@@ -172,6 +147,7 @@
                                         <td class="py-4 px-6 text-slate-600 font-medium whitespace-nowrap">{{ $row['tanggal'] }}</td>
                                         <td class="py-4 px-6 font-semibold text-slate-500 whitespace-nowrap font-mono text-[11px]">{{ $row['referensi'] }}</td>
                                         <td class="py-4 px-6 text-slate-700 font-medium">{{ $row['keterangan'] }}</td>
+                                        <td class="py-4 px-6 text-slate-500">{{ $row['dicatat_oleh'] ?? 'Tidak tercatat' }}</td>
                                         <td class="py-4 px-6 text-right font-bold text-slate-800 whitespace-nowrap font-mono">
                                             {{ $row['debit'] > 0 ? 'Rp ' . number_format($row['debit'], 0, ',', '.') : '-' }}
                                         </td>
@@ -185,13 +161,21 @@
                                 @empty
                                     @if($saldoAwal == 0)
                                         <tr>
-                                            <td colspan="6" class="py-8 text-center text-xs text-slate-400">
+                                            <td colspan="7" class="py-8 text-center text-xs text-slate-400">
                                                 Belum ada mutasi transaksi untuk akun ini pada periode terpilih.
                                             </td>
                                         </tr>
                                     @endif
                                 @endforelse
                             </tbody>
+                            <tfoot>
+                                <tr class="border-t-2 border-slate-200 bg-slate-50 text-xs font-extrabold text-slate-800">
+                                    <td colspan="4" class="px-6 py-4 text-right">TOTAL MUTASI PERIODE</td>
+                                    <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($totalDebitPeriode, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($totalKreditPeriode, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>

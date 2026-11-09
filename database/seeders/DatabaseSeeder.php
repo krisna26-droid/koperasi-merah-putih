@@ -4,190 +4,274 @@ namespace Database\Seeders;
 
 use App\Models\Anggota;
 use App\Models\Angsuran;
-use App\Models\Coa;
 use App\Models\JurnalDetail;
 use App\Models\JurnalUmum;
 use App\Models\Pinjaman;
 use App\Models\Simpanan;
-use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // 1. Akun Pengguna (Admin Pengurus & Ketua Koperasi)
-        User::updateOrCreate(
-            ['username' => 'pengurus'],
-            [
-                'name' => 'I Made Surya (Pengurus)',
-                'password' => Hash::make('password'),
-                'peran' => 'Admin',
-            ]
-        );
+        $this->call([
+            UserSeeder::class,
+            CoaSeeder::class,
+        ]);
 
-        User::updateOrCreate(
-            ['username' => 'ketua'],
-            [
-                'name' => 'I Wayan Sudarta (Ketua)',
-                'password' => Hash::make('password'),
-                'peran' => 'Ketua',
-            ]
-        );
+        $anggota = $this->seedAnggota();
 
-        // 2. Bagan Akun / Chart of Accounts (CoA) Baku
-        $coas = [
-            ['kode_akun' => '101', 'nama_akun' => 'Kas Koperasi', 'saldo_normal' => 'Debit'],
-            ['kode_akun' => '102', 'nama_akun' => 'Kas Bank BPD Bali', 'saldo_normal' => 'Debit'],
-            ['kode_akun' => '103', 'nama_akun' => 'Piutang Pinjaman Anggota', 'saldo_normal' => 'Debit'],
-            ['kode_akun' => '201', 'nama_akun' => 'Hutang Operasional', 'saldo_normal' => 'Kredit'],
-            ['kode_akun' => '301', 'nama_akun' => 'Simpanan Pokok', 'saldo_normal' => 'Kredit'],
-            ['kode_akun' => '302', 'nama_akun' => 'Simpanan Wajib', 'saldo_normal' => 'Kredit'],
-            ['kode_akun' => '303', 'nama_akun' => 'Simpanan Sukarela', 'saldo_normal' => 'Kredit'],
-            ['kode_akun' => '401', 'nama_akun' => 'Pendapatan Bunga Pinjaman', 'saldo_normal' => 'Kredit'],
-            ['kode_akun' => '501', 'nama_akun' => 'Beban Operasional & ATK', 'saldo_normal' => 'Debit'],
-        ];
+        $this->seedSimpanan($anggota);
+        $this->seedPinjamanDanAngsuran($anggota);
+    }
 
-        foreach ($coas as $coa) {
-            Coa::updateOrCreate(['kode_akun' => $coa['kode_akun']], $coa);
+    /** @return array<int, string> */
+    private function seedAnggota(): array
+    {
+        $anggotaIds = [];
+
+        // 50 anggota Aktif dan 10 anggota Cuti untuk mencakup setiap status.
+        for ($number = 1; $number <= 60; $number++) {
+            $idAnggota = sprintf('AG-%05d', $number);
+            $status = $number <= 50 ? 'Aktif' : 'Cuti';
+
+            $record = Anggota::updateOrCreate(
+                ['id_anggota' => $idAnggota],
+                [
+                    'nama' => sprintf('Anggota Demo %02d', $number),
+                    'nik' => sprintf('5104%012d', $number),
+                    'jenis_kelamin' => $number % 2 === 0 ? 'Perempuan' : 'Laki-laki',
+                    'pekerjaan' => $number % 2 === 0 ? 'Pedagang' : 'Petani',
+                    'alamat' => sprintf('Banjar Demo %02d, Desa Buruan', (($number - 1) % 10) + 1),
+                    'no_telepon' => sprintf('08%010d', $number),
+                    'email' => sprintf('anggota.demo.%02d@example.test', $number),
+                    'status' => $status,
+                    'created_by' => 'pengurus',
+                ]
+            );
+            $this->setCreatedAt($record, Carbon::create(2026, 9, 1)->addDays($number - 1));
+
+            $anggotaIds[$number] = $idAnggota;
         }
 
-        // 3. Data Anggota
-        $anggotaList = [
-            ['id_anggota' => 'A-001', 'nama' => 'I Wayan Darmada', 'nik' => '5104030101850001', 'alamat' => 'Br. Bangunliman, Desa Buruan', 'no_telepon' => '081234567891', 'status' => 'Aktif'],
-            ['id_anggota' => 'A-002', 'nama' => 'Ni Made Sukerni', 'nik' => '5104034502880002', 'alamat' => 'Br. Buruan Kaja, Desa Buruan', 'no_telepon' => '081234567892', 'status' => 'Aktif'],
-            ['id_anggota' => 'A-003', 'nama' => 'I Nyoman Suardana', 'nik' => '5104031205900003', 'alamat' => 'Br. Celuk, Desa Buruan', 'no_telepon' => '081234567893', 'status' => 'Aktif'],
-            ['id_anggota' => 'A-004', 'nama' => 'I Ketut Gede Wiguna', 'nik' => '5104032008920004', 'alamat' => 'Br. Bangunliman, Desa Buruan', 'no_telepon' => '081234567894', 'status' => 'Aktif'],
-            ['id_anggota' => 'A-005', 'nama' => 'Ni Luh Putu Astuti', 'nik' => '5104036011950005', 'alamat' => 'Br. Kutri, Desa Buruan', 'no_telepon' => '081234567895', 'status' => 'Cuti'],
-        ];
+        return $anggotaIds;
+    }
 
-        foreach ($anggotaList as $ang) {
-            Anggota::updateOrCreate(['id_anggota' => $ang['id_anggota']], $ang);
+    /** @param array<int, string> $anggota */
+    private function seedSimpanan(array $anggota): void
+    {
+        $akunSimpanan = [
+            'Pokok' => '301',
+            'Wajib' => '302',
+            'Sukarela' => '303',
+        ];
+        $sequence = 0;
+
+        // Sepuluh transaksi berjurnal untuk masing-masing jenis simpanan.
+        foreach ($akunSimpanan as $jenis => $kodeAkun) {
+            for ($number = 1; $number <= 10; $number++) {
+                $sequence++;
+                $idSimpanan = sprintf('SMP-20261001-%04d', $sequence);
+                $idAnggota = $anggota[$sequence];
+                $nominal = 100_000 + ($number * 25_000);
+
+                $record = Simpanan::updateOrCreate(
+                    ['id_simpanan' => $idSimpanan],
+                    [
+                        'id_anggota' => $idAnggota,
+                        'jenis_simpanan' => $jenis,
+                        'nominal' => $nominal,
+                        'is_jurnaled' => true,
+                        'created_by' => 'pengurus',
+                    ]
+                );
+                $tanggalSimpanan = Carbon::create(2026, 10, 1)->addDays($sequence - 1);
+                $this->setCreatedAt($record, $tanggalSimpanan);
+
+                $idJurnal = sprintf('JRN-20261001-%04d', $sequence);
+                $this->createJournal(
+                    $idJurnal,
+                    $idSimpanan,
+                    'Simpanan',
+                    "Setoran simpanan {$jenis} anggota {$idAnggota}",
+                    'pengurus',
+                    $tanggalSimpanan,
+                    [
+                        ['kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $nominal],
+                        ['kode_akun' => $kodeAkun, 'posisi' => 'Kredit', 'nominal' => $nominal],
+                    ]
+                );
+            }
         }
 
-        // 4. Bersihkan data transaksi lama
-        DB::table('tb_jurnal_detail')->delete();
-        DB::table('tb_jurnal_umum')->delete();
-        DB::table('tb_angsuran')->delete();
-        DB::table('tb_pinjaman')->delete();
-        DB::table('tb_simpanan')->delete();
+        // Sepuluh simpanan belum diposting untuk mengisi kondisi pending.
+        for ($number = 1; $number <= 10; $number++) {
+            $idSimpanan = sprintf('SMP-20261001-%04d', 30 + $number);
+            $jenis = array_keys($akunSimpanan)[($number - 1) % count($akunSimpanan)];
 
-        // 5. Transaksi Simpanan & Auto-Jurnal
-        $simpananData = [
-            ['id' => 'SMP-20260701-0001', 'anggota' => 'A-001', 'jenis' => 'Pokok', 'nominal' => 100000.00, 'tgl' => '2026-07-01', 'akun_kredit' => '301'],
-            ['id' => 'SMP-20260701-0002', 'anggota' => 'A-001', 'jenis' => 'Wajib', 'nominal' => 50000.00, 'tgl' => '2026-07-01', 'akun_kredit' => '302'],
-            ['id' => 'SMP-20260702-0001', 'anggota' => 'A-002', 'jenis' => 'Pokok', 'nominal' => 100000.00, 'tgl' => '2026-07-02', 'akun_kredit' => '301'],
-            ['id' => 'SMP-20260702-0002', 'anggota' => 'A-002', 'jenis' => 'Wajib', 'nominal' => 50000.00, 'tgl' => '2026-07-02', 'akun_kredit' => '302'],
-            ['id' => 'SMP-20260705-0001', 'anggota' => 'A-003', 'jenis' => 'Sukarela', 'nominal' => 500000.00, 'tgl' => '2026-07-05', 'akun_kredit' => '303'],
-            ['id' => 'SMP-20260710-0001', 'anggota' => 'A-004', 'jenis' => 'Pokok', 'nominal' => 100000.00, 'tgl' => '2026-07-10', 'akun_kredit' => '301'],
-        ];
+            $record = Simpanan::updateOrCreate(
+                ['id_simpanan' => $idSimpanan],
+                [
+                    'id_anggota' => $anggota[30 + $number],
+                    'jenis_simpanan' => $jenis,
+                    'nominal' => 150_000 + ($number * 10_000),
+                    'is_jurnaled' => false,
+                    'created_by' => 'pengurus',
+                ]
+            );
+            $this->setCreatedAt($record, Carbon::create(2026, 10, 15)->addDays($number - 1));
+        }
+    }
 
-        $jrnIndex = 1;
-        foreach ($simpananData as $s) {
-            Simpanan::create([
-                'id_simpanan' => $s['id'],
-                'id_anggota' => $s['anggota'],
-                'jenis_simpanan' => $s['jenis'],
-                'nominal' => $s['nominal'],
-                'is_jurnaled' => true,
-                'created_by' => 'pengurus',
-                'created_at' => Carbon::parse($s['tgl']),
-            ]);
+    /** @param array<int, string> $anggota */
+    private function seedPinjamanDanAngsuran(array $anggota): void
+    {
+        $statusPinjaman = ['Pengajuan', 'Disetujui', 'Ditolak', 'Berjalan', 'Lunas'];
+        $nomorAngsuran = 0;
+        $nomorJurnalPinjaman = 0;
+        $nomorJurnalAngsuran = 0;
 
-            $idJrn = sprintf("JRN-%s-%04d", str_replace('-', '', $s['tgl']), $jrnIndex++);
-            JurnalUmum::create([
-                'id_jurnal' => $idJrn,
-                'tanggal' => $s['tgl'],
-                'id_referensi' => $s['id'],
-                'tipe_transaksi' => 'Simpanan',
-                'keterangan' => "Setoran Simpanan {$s['jenis']} a.n {$s['anggota']}",
+        // Sepuluh pinjaman pada setiap status yang tersedia di enum tb_pinjaman.
+        foreach ($statusPinjaman as $indexStatus => $status) {
+            for ($number = 1; $number <= 10; $number++) {
+                $numberPinjaman = ($indexStatus * 10) + $number;
+                $idPinjaman = sprintf('PNJ-20261002-%04d', $numberPinjaman);
+                $idAnggota = $anggota[$numberPinjaman];
+                $jumlahPinjam = 6_000_000 + ($numberPinjaman * 600_000);
+                $tenor = 6;
+                $pokokPerBulan = $jumlahPinjam / $tenor;
+                $bungaPerBulan = round($jumlahPinjam * 0.015, 2);
+                $jumlahAngsuran = match ($status) {
+                    'Berjalan' => 2,
+                    'Lunas' => $tenor,
+                    default => 0,
+                };
+                $isJurnaled = in_array($status, ['Berjalan', 'Lunas'], true);
+                $sisaTagihan = max(0, $jumlahPinjam - ($pokokPerBulan * $jumlahAngsuran));
+                $createdAt = Carbon::create(2026, 10, 2)->addDays(($numberPinjaman - 1) % 30);
+                $approved = in_array($status, ['Disetujui', 'Ditolak', 'Berjalan', 'Lunas'], true);
+
+                $pinjaman = Pinjaman::updateOrCreate(
+                    ['id_pinjam' => $idPinjaman],
+                    [
+                        'id_anggota' => $idAnggota,
+                        'jumlah_pinjam' => $jumlahPinjam,
+                        'tenor' => $tenor,
+                        'bunga_rate' => 1.50,
+                        'pokok_per_bulan' => $pokokPerBulan,
+                        'bunga_per_bulan' => $bungaPerBulan,
+                        'sisa_tagihan' => $sisaTagihan,
+                        'status' => $status,
+                        'is_jurnaled' => $isJurnaled,
+                        'created_by' => 'pengurus',
+                        'approved_by' => $approved ? 'ketua' : null,
+                        'approved_at' => $approved ? $createdAt->copy()->addHours(2) : null,
+                    ]
+                );
+                $this->setCreatedAt($pinjaman, $createdAt);
+
+                if (!$isJurnaled) {
+                    continue;
+                }
+
+                $nomorJurnalPinjaman++;
+                $this->createJournal(
+                    sprintf('JRN-20261002-%04d', $nomorJurnalPinjaman),
+                    $idPinjaman,
+                    'Pinjaman',
+                    "Pencairan pinjaman {$idPinjaman} anggota {$idAnggota}",
+                    'ketua',
+                    $createdAt->copy()->addHours(2),
+                    [
+                        ['kode_akun' => '103', 'posisi' => 'Debit', 'nominal' => $jumlahPinjam],
+                        ['kode_akun' => '101', 'posisi' => 'Kredit', 'nominal' => $jumlahPinjam],
+                    ]
+                );
+
+                for ($angsuranKe = 1; $angsuranKe <= $jumlahAngsuran; $angsuranKe++) {
+                    $nomorAngsuran++;
+                    $nomorJurnalAngsuran++;
+                    $idAngsuran = sprintf('ANG-20261003-%04d', $nomorAngsuran);
+                    $tanggalAngsuran = Carbon::create(2026, 10, 4)
+                        ->addDays(($numberPinjaman + $angsuranKe) % 30);
+                    $totalBayar = $pokokPerBulan + $bungaPerBulan;
+
+                    $angsuran = Angsuran::updateOrCreate(
+                        ['id_angsuran' => $idAngsuran],
+                        [
+                            'id_pinjam' => $idPinjaman,
+                            'id_anggota' => $idAnggota,
+                            'angsuran_ke' => $angsuranKe,
+                            'bayar_pokok' => $pokokPerBulan,
+                            'bayar_bunga' => $bungaPerBulan,
+                            'total_bayar' => $totalBayar,
+                            'is_jurnaled' => true,
+                            'created_by' => 'pengurus',
+                        ]
+                    );
+                    $this->setCreatedAt($angsuran, $tanggalAngsuran);
+
+                    $this->createJournal(
+                        sprintf('JRN-20261003-%04d', $nomorJurnalAngsuran),
+                        $idAngsuran,
+                        'Angsuran',
+                        "Angsuran ke-{$angsuranKe} pinjaman {$idPinjaman}",
+                        'pengurus',
+                        $tanggalAngsuran,
+                        [
+                            ['kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $totalBayar],
+                            ['kode_akun' => '103', 'posisi' => 'Kredit', 'nominal' => $pokokPerBulan],
+                            ['kode_akun' => '401', 'posisi' => 'Kredit', 'nominal' => $bungaPerBulan],
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /** @param array<int, array{kode_akun: string, posisi: string, nominal: int|float}> $details */
+    private function createJournal(
+        string $idJurnal,
+        string $referensi,
+        string $tipe,
+        string $keterangan,
+        string $createdBy,
+        Carbon $tanggal,
+        array $details
+    ): void {
+        $jurnal = JurnalUmum::updateOrCreate(
+            ['id_jurnal' => $idJurnal],
+            [
+                'tanggal' => $tanggal->toDateString(),
+                'id_referensi' => $referensi,
+                'tipe_transaksi' => $tipe,
+                'keterangan' => $keterangan,
                 'is_reversal' => false,
-                'created_by' => 'pengurus',
-            ]);
+                'reversed_ref' => null,
+                'created_by' => $createdBy,
+            ]
+        );
+        $this->setCreatedAt($jurnal, $tanggal);
 
-            JurnalDetail::create(['id_jurnal' => $idJrn, 'kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $s['nominal']]);
-            JurnalDetail::create(['id_jurnal' => $idJrn, 'kode_akun' => $s['akun_kredit'], 'posisi' => 'Kredit', 'nominal' => $s['nominal']]);
+        foreach ($details as $detail) {
+            JurnalDetail::updateOrCreate(
+                [
+                    'id_jurnal' => $idJurnal,
+                    'kode_akun' => $detail['kode_akun'],
+                    'posisi' => $detail['posisi'],
+                ],
+                ['nominal' => $detail['nominal']]
+            );
         }
+    }
 
-        // 6. Transaksi Pinjaman & Angsuran
-        $idPinjam1 = 'PNJ-20260710-0001';
-        Pinjaman::create([
-            'id_pinjam' => $idPinjam1,
-            'id_anggota' => 'A-001',
-            'jumlah_pinjam' => 5000000.00,
-            'tenor' => 10,
-            'bunga_rate' => 1.50,
-            'pokok_per_bulan' => 500000.00,
-            'bunga_per_bulan' => 75000.00,
-            'sisa_tagihan' => 4500000.00,
-            'status' => 'Berjalan',
-            'is_jurnaled' => true,
-            'created_by' => 'pengurus',
-            'approved_by' => 'ketua',
-            'approved_at' => Carbon::parse('2026-07-10 10:00:00'),
-            'created_at' => Carbon::parse('2026-07-10 09:00:00'),
-        ]);
-
-        $idJrnPinjam1 = 'JRN-20260710-0005';
-        JurnalUmum::create([
-            'id_jurnal' => $idJrnPinjam1,
-            'tanggal' => '2026-07-10',
-            'id_referensi' => $idPinjam1,
-            'tipe_transaksi' => 'Pinjaman',
-            'keterangan' => "Pencairan Pinjaman {$idPinjam1} a.n I Wayan Darmada",
-            'is_reversal' => false,
-            'created_by' => 'ketua',
-        ]);
-        JurnalDetail::create(['id_jurnal' => $idJrnPinjam1, 'kode_akun' => '103', 'posisi' => 'Debit', 'nominal' => 5000000.00]);
-        JurnalDetail::create(['id_jurnal' => $idJrnPinjam1, 'kode_akun' => '101', 'posisi' => 'Kredit', 'nominal' => 5000000.00]);
-
-        $idAngsuran1 = 'ANG-20260810-0001';
-        Angsuran::create([
-            'id_angsuran' => $idAngsuran1,
-            'id_pinjam' => $idPinjam1,
-            'id_anggota' => 'A-001',
-            'angsuran_ke' => 1,
-            'bayar_pokok' => 500000.00,
-            'bayar_bunga' => 75000.00,
-            'total_bayar' => 575000.00,
-            'is_jurnaled' => true,
-            'created_by' => 'pengurus',
-            'created_at' => Carbon::parse('2026-08-10 14:00:00'),
-        ]);
-
-        $idJrnAngsuran1 = 'JRN-20260810-0001';
-        JurnalUmum::create([
-            'id_jurnal' => $idJrnAngsuran1,
-            'tanggal' => '2026-08-10',
-            'id_referensi' => $idAngsuran1,
-            'tipe_transaksi' => 'Angsuran',
-            'keterangan' => "Angsuran ke-1 Pinjaman {$idPinjam1} a.n I Wayan Darmada",
-            'is_reversal' => false,
-            'created_by' => 'pengurus',
-        ]);
-        JurnalDetail::create(['id_jurnal' => $idJrnAngsuran1, 'kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => 575000.00]);
-        JurnalDetail::create(['id_jurnal' => $idJrnAngsuran1, 'kode_akun' => '103', 'posisi' => 'Kredit', 'nominal' => 500000.00]);
-        JurnalDetail::create(['id_jurnal' => $idJrnAngsuran1, 'kode_akun' => '401', 'posisi' => 'Kredit', 'nominal' => 75000.00]);
-
-        Pinjaman::create([
-            'id_pinjam' => 'PNJ-20260815-0001',
-            'id_anggota' => 'A-002',
-            'jumlah_pinjam' => 3000000.00,
-            'tenor' => 6,
-            'bunga_rate' => 1.50,
-            'pokok_per_bulan' => 500000.00,
-            'bunga_per_bulan' => 45000.00,
-            'sisa_tagihan' => 3000000.00,
-            'status' => 'Pengajuan',
-            'is_jurnaled' => false,
-            'created_by' => 'pengurus',
-            'created_at' => Carbon::parse('2026-08-15 11:30:00'),
-        ]);
+    private function setCreatedAt(Model $model, Carbon $timestamp): void
+    {
+        $model->forceFill([
+            'created_at' => $timestamp,
+            'updated_at' => $timestamp,
+        ])->saveQuietly();
     }
 }

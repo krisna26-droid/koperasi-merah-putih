@@ -37,7 +37,7 @@ class BukuBesarController extends Controller
         }
 
         // 2. Ambil Mutasi Periode Terpilih
-        $mutasi = JurnalDetail::with('header')
+        $mutasi = JurnalDetail::with('header.creator')
             ->where('kode_akun', $selectedAccount)
             ->whereHas('header', function ($q) use ($startDate, $endDate) {$q->whereBetween('tanggal', [$startDate->format('Y-m-d'),$endDate->format('Y-m-d')]);
             })
@@ -67,6 +67,7 @@ class BukuBesarController extends Controller
                 'tanggal' => Carbon::parse($item->header->tanggal)->translatedFormat('d F Y'),
                 'referensi' => $item->header->id_referensi ?? $item->header->id_jurnal,
                 'keterangan' => $item->header->keterangan,
+                'dicatat_oleh' => $item->header->creator?->name ?? $item->header->created_by,
                 'debit' => $debit,
                 'kredit' => $kredit,
                 'saldo' => $runningBalance,
@@ -80,6 +81,7 @@ class BukuBesarController extends Controller
             'account',
             'saldoAwal',
             'totalDebitPeriode',
+            'totalKreditPeriode',
             'saldoAkhir',
             'ledgerData',
             'startDate',

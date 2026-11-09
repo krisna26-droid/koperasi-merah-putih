@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaksi Angsuran - Koperasi Merah Putih</title>
+    <title>Transaksi Angsuran - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,36 +19,7 @@
         @include('layouts.sidebar-pengurus')
 
         <div class="flex-1 flex flex-col min-w-0">
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
-                <div>
-                    <div class="flex items-center space-x-2 text-xs text-slate-400">
-                        <span>Koperasi Merah Putih</span>
-                        <span>&rsaquo;</span>
-                        <span>Operasional</span>
-                        <span>&rsaquo;</span>
-                        <span class="text-slate-600 font-medium">Angsuran</span>
-                    </div>
-                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Transaksi Pembayaran Angsuran</h2>
-                </div>
-
-                <div class="flex items-center space-x-5">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        </div>
-                        <div class="text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] text-slate-400">Admin Pengurus</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
-                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Transaksi Pembayaran Angsuran" />
 
             <main class="p-8 space-y-6">
                 @if(session('success'))
@@ -138,6 +109,7 @@
                             <h3 class="text-sm font-extrabold text-slate-800">Riwayat Pembayaran Angsuran</h3>
                             <p class="text-xs text-slate-400">Daftar transaksi penerimaan angsuran yang telah dijurnal otomatis.</p>
                         </div>
+                        <x-export-buttons report="angsuran" />
                     </div>
 
                     <div class="overflow-x-auto">

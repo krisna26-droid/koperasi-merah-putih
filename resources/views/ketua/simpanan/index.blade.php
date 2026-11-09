@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Simpanan - Koperasi Merah Putih</title>
+    <title>Pemantauan Simpanan - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,38 +21,7 @@
 
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Navbar Header -->
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
-                <div>
-                    <div class="flex items-center space-x-2 text-xs text-slate-400">
-                        <span>Koperasi Merah Putih</span>
-                        <span>&rsaquo;</span>
-                        <span class="text-slate-600 font-medium">Simpanan</span>
-                    </div>
-                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Simpanan</h2>
-                </div>
-
-                <div class="flex items-center space-x-5">
-                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-                        <i class="fi fi-rr-search flex items-center text-sm"></i>
-                    </button>
-                    <div class="h-6 w-px bg-slate-100"></div>
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        </div>
-                        <div class="text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] text-slate-400">Ketua Koperasi</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
-                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Simpanan" />
 
             <main class="p-8 space-y-6">
                 <!-- Notifications -->
@@ -66,14 +35,10 @@
                 <!-- Title & Button Trigger Modal -->
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Manajemen Simpanan</h1>
-                        <p class="text-xs text-slate-500 mt-1">Kelola simpanan pokok, wajib, dan sukarela anggota.</p>
+                        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Pemantauan Simpanan</h1>
+                        <p class="text-xs text-slate-500 mt-1">Tinjau simpanan pokok, wajib, dan sukarela anggota.</p>
                     </div>
 
-                    <button type="button" onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition flex items-center space-x-2">
-                        <i class="fi fi-rr-plus flex items-center text-xs"></i>
-                        <span>Tambah simpanan</span>
-                    </button>
                 </div>
 
                 <!-- 4 Stat Cards -->
@@ -174,10 +139,7 @@
                                 <span>Filter</span>
                             </button>
                         </form>
-                        <button type="button" class="w-full sm:w-auto px-3.5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2 shadow-sm">
-                            <i class="fi fi-rr-download text-xs text-slate-400"></i>
-                            <span>Export</span>
-                        </button>
+                        <x-export-buttons report="simpanan" />
                     </div>
 
                     <div class="overflow-x-auto">
@@ -259,83 +221,5 @@
         </div>
     </div>
 
-    <!-- MODAL TAMBAH TRANSAKSI SIMPANAN -->
-    <div id="modalTambahSimpanan" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                    <h3 class="text-base font-bold text-slate-800">Tambah transaksi simpanan</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Catat penerimaan simpanan anggota.</p>
-                </div>
-                <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50 transition">
-                    <i class="fi fi-rr-cross-small text-base"></i>
-                </button>
-            </div>
-
-            <!-- Modal Form -->
-            <form action="{{ route('ketua.simpanan.store') }}" method="POST" class="p-6 space-y-4">
-                @csrf
-                <!-- Pilih Anggota -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Anggota <span class="text-rose-500">*</span></label>
-                    <select name="id_anggota" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                        <option value="" disabled selected>Pilih Anggota</option>
-                        @foreach($anggotaList as $ag)
-                            <option value="{{ $ag->id_anggota }}">{{ $ag->nama }} ({{ $ag->id_anggota }})</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Jenis Simpanan -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Jenis simpanan <span class="text-rose-500">*</span></label>
-                    <select name="jenis_simpanan" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                        <option value="Wajib">Wajib</option>
-                        <option value="Pokok">Pokok</option>
-                        <option value="Sukarela">Sukarela</option>
-                    </select>
-                </div>
-
-                <!-- Tanggal Transaksi & Jumlah -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal transaksi</label>
-                        <input type="date" name="tanggal" value="{{ now()->format('Y-m-d') }}" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Jumlah <span class="text-rose-500">*</span></label>
-                        <input type="number" name="nominal" required placeholder="150000" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                    </div>
-                </div>
-
-                <!-- Keterangan -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan</label>
-                    <input type="text" name="keterangan" placeholder="Tambahkan keterangan (opsional)" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                </div>
-
-                <!-- Modal Actions -->
-                <div class="pt-4 flex items-center justify-end space-x-2 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
-                        Simpan transaksi
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Script Modal -->
-    <script>
-        function openModal() {
-            document.getElementById('modalTambahSimpanan').classList.remove('hidden');
-        }
-        function closeModal() {
-            document.getElementById('modalTambahSimpanan').classList.add('hidden');
-        }
-    </script>
 </body>
 </html>

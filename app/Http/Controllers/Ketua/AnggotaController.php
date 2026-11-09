@@ -8,7 +8,6 @@ use App\Models\Angsuran;
 use App\Models\Pinjaman;
 use App\Models\Simpanan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AnggotaController extends Controller
 {
@@ -51,40 +50,6 @@ class AnggotaController extends Controller
             'anggotaList',
             'generatedId'
         ));
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'id_anggota' => 'required|string|unique:tb_anggota,id_anggota',
-            'nama' => 'required|string|max:255',
-            'nik' => 'nullable|string|max:20',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-            'pekerjaan' => 'nullable|string|max:100',
-            'email' => 'nullable|email|max:100',
-            'status' => 'required|in:Aktif,Nonaktif,Cuti',
-            'alamat' => 'required|string',
-            'no_telepon' => 'required|string|max:20',
-            'created_at' => 'nullable|date',
-        ]);
-
-        $anggota = new Anggota();
-        $anggota->id_anggota = $validated['id_anggota'];
-        $anggota->nama = $validated['nama'];
-        $anggota->nik = $validated['nik'] ?? null;
-        $anggota->jenis_kelamin = $validated['jenis_kelamin'];
-        $anggota->pekerjaan = $validated['pekerjaan'] ?? 'Wiraswasta';
-        $anggota->email = $validated['email'] ?? null;
-        $anggota->status = $validated['status'];
-        $anggota->alamat = $validated['alamat'];
-        $anggota->no_telepon = $validated['no_telepon'];
-        $anggota->created_by = Auth::user()->username ?? 'admin';
-        if ($request->filled('created_at')) {
-            $anggota->created_at = $request->created_at;
-        }
-        $anggota->save();
-
-        return redirect()->route('ketua.anggota.index')->with('success', 'Anggota baru berhasil ditambahkan.');
     }
 
     public function show($id)

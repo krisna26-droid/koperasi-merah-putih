@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Ketua\ApprovalController as KetuaApprovalController;
 use App\Http\Controllers\Ketua\AnggotaController as KetuaAnggotaController;
 use App\Http\Controllers\Ketua\AngsuranController as KetuaAngsuranController;
-use App\Http\Controllers\Ketua\ApprovalController as KetuaApprovalController;
 use App\Http\Controllers\Ketua\DashboardController as KetuaDashboardController;
 use App\Http\Controllers\Ketua\LaporanController as KetuaLaporanController;
 use App\Http\Controllers\Ketua\PinjamanController as KetuaPinjamanController;
@@ -17,6 +17,10 @@ use App\Http\Controllers\Pengurus\JurnalController;
 use App\Http\Controllers\Pengurus\PinjamanController;
 use App\Http\Controllers\Pengurus\SimpananController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ExportController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\CooperativeLogoController;
+use App\Http\Controllers\Ketua\CooperativeSettingController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +34,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+Route::get('/cooperative-logo', CooperativeLogoController::class)->name('cooperative.logo');
 
 // Dashboard Router Berdasarkan Role
 Route::get('/dashboard', function () {
@@ -49,6 +54,8 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:Admin'])->prefix('pengurus')->name('pengurus.')->group(function () {
+    Route::get('/export/{report}/{format}', ExportController::class)->name('export');
+    Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     Route::get('/dashboard', [PengurusDashboardController::class, 'index'])->name('dashboard');
 
     // Modul Operasional Pengurus
@@ -83,21 +90,24 @@ Route::middleware(['auth', 'role:Admin'])->prefix('pengurus')->name('pengurus.')
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:Ketua'])->prefix('ketua')->name('ketua.')->group(function () {
-    // Utama
+    Route::get('/export/{report}/{format}', ExportController::class)->name('export');
+    Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+    Route::get('/pengaturan-identitas', [CooperativeSettingController::class, 'edit'])->name('settings.identity.edit');
+    Route::put('/pengaturan-identitas', [CooperativeSettingController::class, 'update'])->name('settings.identity.update');
     Route::get('/dashboard', [KetuaDashboardController::class, 'index'])->name('dashboard');
 
-    // Operasional (Monitoring & Validasi)
+    // Monitoring read-only untuk anggota.
     Route::prefix('anggota')->name('anggota.')->group(function () {
         Route::get('/', [KetuaAnggotaController::class, 'index'])->name('index');
-        Route::post('/', [KetuaAnggotaController::class, 'store'])->name('store');
         Route::get('/{id}', [KetuaAnggotaController::class, 'show'])->name('show');
     });
 
+    // Monitoring read-only untuk simpanan.
     Route::prefix('simpanan')->name('simpanan.')->group(function () {
         Route::get('/', [KetuaSimpananController::class, 'index'])->name('index');
-        Route::post('/', [KetuaSimpananController::class, 'store'])->name('store');
     });
 
+    // Ketua dapat memeriksa pinjaman dan menyetujui atau menolaknya.
     Route::prefix('pinjaman')->name('pinjaman.')->group(function () {
         Route::get('/', [KetuaPinjamanController::class, 'index'])->name('index');
         Route::get('/{id}', [KetuaPinjamanController::class, 'show'])->name('show');
@@ -105,12 +115,12 @@ Route::middleware(['auth', 'role:Ketua'])->prefix('ketua')->name('ketua.')->grou
         Route::post('/{id}/reject', [KetuaPinjamanController::class, 'reject'])->name('reject');
     });
 
-    Route::get('/angsuran', [KetuaAngsuranController::class, 'index'])->name('angsuran.index');
-
-    // Approval Panel Standalone (Opsional)
+    // Approval panel hanya menangani keputusan atas pinjaman.
     Route::get('/approval', [KetuaApprovalController::class, 'index'])->name('approval.index');
     Route::post('/approval/{id}/approve', [KetuaApprovalController::class, 'approve'])->name('approval.approve');
     Route::post('/approval/{id}/reject', [KetuaApprovalController::class, 'reject'])->name('approval.reject');
+
+    Route::get('/angsuran', [KetuaAngsuranController::class, 'index'])->name('angsuran.index');
 
     // Akuntansi & Laporan Ketua
     Route::prefix('laporan')->name('laporan.')->group(function () {
@@ -135,9 +145,11 @@ Route::middleware(['auth', 'role:Ketua'])->prefix('ketua')->name('ketua.')->grou
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::middleware('role:Admin')->group(function () {
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

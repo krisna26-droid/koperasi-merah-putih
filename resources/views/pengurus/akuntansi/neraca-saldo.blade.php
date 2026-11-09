@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neraca Saldo (Trial Balance) - Koperasi Merah Putih</title>
+    <title>Neraca Saldo (Trial Balance) - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
         </div>
 
         <div class="flex-1 flex flex-col min-w-0">
+            <x-page-header title="Neraca Saldo" section="Akuntansi" print-hidden="true" />
             <main class="p-8 space-y-6">
                 <!-- Toolbar Filter & Cetak -->
                 <div class="no-print bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -34,10 +35,7 @@
                         </button>
                     </form>
 
-                    <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 flex items-center space-x-1.5 transition">
-                        <i class="fi fi-rr-print"></i>
-                        <span>Cetak Neraca Saldo</span>
-                    </button>
+                    <x-export-buttons report="neraca-saldo" />
                 </div>
 
                 <!-- Status Validasi Balance -->
@@ -52,7 +50,8 @@
                 <!-- Tabel Neraca Saldo -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                     <div class="text-center pb-4 border-b border-slate-100">
-                        <h2 class="text-lg font-extrabold text-slate-900">KOPERASI MERAH PUTIH DESA BURUAN</h2>
+                        <x-cooperative-print-brand />
+                        <h2 class="text-lg font-extrabold text-slate-900">{{ strtoupper($cooperativeSettings->name) }} · {{ $cooperativeSettings->address }}</h2>
                         <h3 class="text-sm font-bold text-slate-700 mt-0.5">NERACA SALDO (TRIAL BALANCE)</h3>
                         <p class="text-xs text-slate-400 mt-1">Per {{ \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y') }}</p>
                     </div>

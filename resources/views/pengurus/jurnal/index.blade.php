@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Umum - Koperasi Merah Putih</title>
+    <title>Jurnal Umum - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -19,40 +19,7 @@
         @include('layouts.sidebar-pengurus')
 
         <div class="flex-1 flex flex-col min-w-0">
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
-                <div>
-                    <div class="flex items-center space-x-2 text-xs text-slate-400">
-                        <span>Koperasi Merah Putih</span>
-                        <span>&rsaquo;</span>
-                        <span>Akuntansi</span>
-                        <span>&rsaquo;</span>
-                        <span class="text-slate-600 font-medium">Jurnal Umum</span>
-                    </div>
-                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Jurnal Umum</h2>
-                </div>
-
-                <div class="flex items-center space-x-5">
-                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-                        <i class="fi fi-rr-search flex items-center text-sm"></i>
-                    </button>
-                    <div class="h-6 w-px bg-slate-100"></div>
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        </div>
-                        <div class="text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] text-slate-400">Admin Pengurus</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
-                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Jurnal Umum" section="Laporan" />
 
             <main class="p-8 space-y-6">
                 @if(session('success'))
@@ -75,14 +42,11 @@
                     </div>
 
                     <div class="flex items-center space-x-3">
-                        <button type="button" onclick="window.print()" class="px-3.5 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition flex items-center space-x-2 shadow-sm">
-                            <i class="fi fi-rr-print text-xs"></i>
-                            <span>Cetak</span>
-                        </button>
+                        <x-export-buttons report="jurnal" />
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold text-slate-400">Total jurnal bulan ini</p>
@@ -128,6 +92,13 @@
                             <i class="fi fi-rr-arrow-up-right text-xl"></i>
                         </div>
                     </div>
+                    <div class="bg-white p-5 rounded-2xl border {{ $isLedgerBalanced ? 'border-emerald-200' : 'border-rose-200' }} shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-400">Status seluruh jurnal</p>
+                            <h3 class="mt-1 text-sm font-extrabold {{ $isLedgerBalanced ? 'text-emerald-700' : 'text-rose-700' }}">{{ $isLedgerBalanced ? 'Seimbang' : 'Tidak seimbang' }}</h3>
+                        </div>
+                        <i class="fi {{ $isLedgerBalanced ? 'fi-rr-check-circle text-emerald-600' : 'fi-rr-cross-circle text-rose-600' }} text-2xl"></i>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -168,6 +139,7 @@
                                     <th class="py-3.5 px-6">Keterangan</th>
                                     <th class="py-3.5 px-6 text-right">Debit</th>
                                     <th class="py-3.5 px-6 text-right">Kredit</th>
+                                    <th class="py-3.5 px-6 text-center">Balance</th>
                                     <th class="py-3.5 px-6 text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -191,6 +163,16 @@
                                         </td>
                                         <td class="py-4 px-6 font-bold text-slate-800 whitespace-nowrap font-mono text-right">
                                             {{ $item->posisi === 'Kredit' ? 'Rp ' . number_format($item->nominal, 0, ',', '.') : '-' }}
+                                        </td>
+                                        @php
+                                            $journalRows = $item->header?->details ?? collect();
+                                            $journalDebit = (float) $journalRows->where('posisi', 'Debit')->sum('nominal');
+                                            $journalCredit = (float) $journalRows->where('posisi', 'Kredit')->sum('nominal');
+                                            $journalBalanced = round($journalDebit, 2) === round($journalCredit, 2);
+                                        @endphp
+                                        <td class="py-4 px-6 text-center whitespace-nowrap">
+                                            <span class="rounded-full px-2 py-1 text-[10px] font-bold {{ $journalBalanced ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700' }}">{{ $journalBalanced ? 'Seimbang' : 'Tidak seimbang' }}</span>
+                                            <span class="mt-1 block text-[10px] text-slate-400">D {{ number_format($journalDebit, 0, ',', '.') }} · K {{ number_format($journalCredit, 0, ',', '.') }}</span>
                                         </td>
                                         <td class="py-4 px-6 text-center whitespace-nowrap">
                                             <div class="flex items-center justify-center space-x-1.5">
@@ -216,7 +198,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="py-8 text-center text-xs text-slate-400">
+                                        <td colspan="8" class="py-8 text-center text-xs text-slate-400">
                                             Belum ada catatan jurnal umum.
                                         </td>
                                     </tr>
@@ -241,6 +223,7 @@
                 <div>
                     <h3 class="text-base font-bold text-slate-800">Detail jurnal umum</h3>
                     <p id="modalKeterangan" class="text-xs text-slate-400 mt-0.5"></p>
+                    <p id="modalPencatat" class="text-[10px] text-slate-400 mt-1">Dicatat oleh: -</p>
                 </div>
                 <button type="button" onclick="closeJurnalModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50 transition">
                     <i class="fi fi-rr-cross-small text-base"></i>
@@ -293,6 +276,7 @@
                     document.getElementById('modalNomorJurnal').innerText = data.id_jurnal;
                     document.getElementById('modalTanggal').innerText = data.tanggal;
                     document.getElementById('modalKeterangan').innerText = data.keterangan;
+                    document.getElementById('modalPencatat').innerText = 'Dicatat oleh: ' + (data.creator_name || data.created_by || 'Tidak tercatat');
                     document.getElementById('modalTotalDebit').innerText = 'Rp ' + data.total_debit;
                     document.getElementById('modalTotalKredit').innerText = 'Rp ' + data.total_kredit;
 

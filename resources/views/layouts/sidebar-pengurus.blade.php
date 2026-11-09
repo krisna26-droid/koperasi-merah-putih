@@ -6,12 +6,14 @@
     <div>
         <!-- Brand Logo -->
         <div class="flex items-center space-x-3 px-2 py-3 mb-6">
-            <div class="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold shadow-sm shadow-emerald-200">
-                <i class="fi fi-sr-building flex items-center text-lg"></i>
-            </div>
-            <div>
-                <h1 class="text-sm font-bold text-slate-800 leading-tight">Koperasi Merah Putih</h1>
-                <p class="text-[11px] text-slate-400">Desa Buruan · Gianyar</p>
+            @if($cooperativeSettings->logo_path)
+                <img src="{{ route('cooperative.logo') }}?v={{ $cooperativeSettings->updated_at?->timestamp ?? time() }}" alt="Logo {{ $cooperativeSettings->name }}" class="h-10 w-10 shrink-0 rounded-xl bg-white object-contain p-1 shadow-sm">
+            @else
+                <div class="w-9 h-9 shrink-0 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold shadow-sm shadow-emerald-200"><i class="fi fi-sr-building flex items-center text-lg"></i></div>
+            @endif
+            <div class="min-w-0">
+                <h1 class="text-sm font-bold text-slate-800 leading-tight">{{ $cooperativeSettings->name }}</h1>
+                <p class="truncate text-[11px] text-slate-400" title="{{ $cooperativeSettings->address }}">{{ $cooperativeSettings->address }}</p>
             </div>
         </div>
 
@@ -108,6 +110,10 @@
                     <a href="{{ route('pengurus.laporan.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('pengurus.laporan.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }}">
                         <i class="fi fi-rr-document text-base"></i>
                         <span>Laporan</span>
+                    </a>
+                    <a href="{{ route('pengurus.activity-logs.index') }}" class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('pengurus.activity-logs.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-600 hover:bg-slate-50' }}">
+                        <i class="fi fi-rr-time-past text-base"></i>
+                        <span>Log Aktivitas</span>
                     </a>
                 </div>
             </div>

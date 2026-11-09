@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Sisa Hasil Usaha (SHU) - Koperasi Merah Putih</title>
+    <title>Laporan Sisa Hasil Usaha (SHU) - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
         </div>
 
         <div class="flex-1 flex flex-col min-w-0">
+            <x-page-header title="Laporan Sisa Hasil Usaha" section="Akuntansi" print-hidden="true" />
             <main class="p-8 space-y-6">
                 <!-- Toolbar Filter & Print -->
                 <div class="no-print bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -38,16 +39,14 @@
                         </button>
                     </form>
 
-                    <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 flex items-center space-x-1.5 transition">
-                        <i class="fi fi-rr-print"></i>
-                        <span>Cetak Laporan SHU</span>
-                    </button>
+                    <x-export-buttons report="laba-rugi" />
                 </div>
 
                 <!-- Format Laporan Laba Rugi / SHU Standar Akuntansi Koperasi -->
                 <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm max-w-4xl mx-auto space-y-6">
                     <div class="text-center pb-4 border-b border-slate-200">
-                        <h2 class="text-lg font-extrabold text-slate-900">KOPERASI MERAH PUTIH DESA BURUAN</h2>
+                        <x-cooperative-print-brand />
+                        <h2 class="text-lg font-extrabold text-slate-900">{{ strtoupper($cooperativeSettings->name) }} · {{ $cooperativeSettings->address }}</h2>
                         <h3 class="text-sm font-bold text-slate-700 mt-0.5">LAPORAN PERHITUNGAN HASIL USAHA (SISA HASIL USAHA)</h3>
                         <p class="text-xs text-slate-400 mt-1">Periode: {{ \Carbon\Carbon::parse($startDate)->translatedFormat('d F Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->translatedFormat('d F Y') }}</p>
                     </div>

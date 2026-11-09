@@ -119,8 +119,9 @@ class LaporanController extends Controller
             ->count();
 
         $totalDebit = (float) JurnalDetail::where('posisi', 'Debit')->sum('nominal');$totalKredit = (float) JurnalDetail::where('posisi', 'Kredit')->sum('nominal');
+        $isLedgerBalanced = round($totalDebit, 2) === round($totalKredit, 2);
 
-        $query = JurnalDetail::with(['header', 'coa']);
+        $query = JurnalDetail::with(['header.creator', 'header.details', 'coa']);
 
         if ($request->filled('search')) {$search = $request->input('search');$query->where(function ($q) use ($search) {
                 $q->where('id_jurnal', 'like', "\%{$search}%")
@@ -153,6 +154,7 @@ class LaporanController extends Controller
             'totalJurnalBulanIni',
             'totalDebit',
             'totalKredit',
+            'isLedgerBalanced',
             'jurnalDetails',
             'daftarAkun'
         ));
@@ -166,6 +168,8 @@ class LaporanController extends Controller
             'id_jurnal' => $jurnal->id_jurnal,
             'tanggal' => Carbon::parse($jurnal->tanggal)->translatedFormat('d F Y'),
             'keterangan' => $jurnal->keterangan,
+            'created_by' => $jurnal->created_by,
+            'creator_name' => $jurnal->creator?->name,
             'total_debit' => number_format($totalDebit, 0, ',', '.'),
             'total_kredit' => number_format($totalKredit, 0, ',', '.'),             'is_balanced' =>$isBalanced,
             'details' => $jurnal->details->map(function ($d) {
@@ -204,7 +208,7 @@ class LaporanController extends Controller
             }
         }
 
-        $mutasi = JurnalDetail::with('header')
+        $mutasi = JurnalDetail::with('header.creator')
             ->where('kode_akun', $selectedAccount)
             ->whereHas('header', function ($q) use ($startDate, $endDate) {$q->whereBetween('tanggal', [$startDate->format('Y-m-d'),$endDate->format('Y-m-d')]);
             })
@@ -234,6 +238,7 @@ class LaporanController extends Controller
                 'tanggal' => Carbon::parse($item->header->tanggal)->translatedFormat('d F Y'),
                 'referensi' => $item->header->id_referensi ?? $item->header->id_jurnal,
                 'keterangan' => $item->header->keterangan,
+                'dicatat_oleh' => $item->header->creator?->name ?? $item->header->created_by,
                 'debit' => $debit,
                 'kredit' => $kredit,
                 'saldo' => $runningBalance,
@@ -247,6 +252,7 @@ class LaporanController extends Controller
             'account',
             'saldoAwal',
             'totalDebitPeriode',
+            'totalKreditPeriode',
             'saldoAkhir',
             'ledgerData',
             'startDate',

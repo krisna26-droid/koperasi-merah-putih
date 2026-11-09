@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Anggota - Koperasi Merah Putih</title>
+    <title>Pemantauan Anggota - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,38 +20,7 @@
 
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Navbar Header -->
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none font-sans">
-                <div>
-                    <div class="flex items-center space-x-2 text-xs text-slate-400">
-                        <span>Koperasi Merah Putih</span>
-                        <span>&rsaquo;</span>
-                        <span class="text-slate-600 font-medium">Anggota</span>
-                    </div>
-                    <h2 class="text-base font-bold text-slate-800 mt-0.5">Anggota</h2>
-                </div>
-
-                <div class="flex items-center space-x-5">
-                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-                        <i class="fi fi-rr-search flex items-center text-sm"></i>
-                    </button>
-                    <div class="h-6 w-px bg-slate-100"></div>
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                        </div>
-                        <div class="text-left">
-                            <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] text-slate-400">Ketua Koperasi</p>
-                        </div>
-                        <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                            @csrf
-                            <button type="submit" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition-colors flex items-center" title="Keluar">
-                                <i class="fi fi-rr-sign-out-alt text-sm"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Anggota" />
 
             <main class="p-8 space-y-6">
                 <!-- Notifications -->
@@ -65,14 +34,10 @@
                 <!-- Title & Button Trigger Modal -->
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Manajemen Anggota</h1>
-                        <p class="text-xs text-slate-500 mt-1">Kelola data anggota dan informasi keanggotaan koperasi.</p>
+                        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Pemantauan Anggota</h1>
+                        <p class="text-xs text-slate-500 mt-1">Tinjau data anggota dan informasi keanggotaan koperasi.</p>
                     </div>
 
-                    <button type="button" onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition flex items-center space-x-2">
-                        <i class="fi fi-rr-plus flex items-center text-xs"></i>
-                        <span>Tambah anggota</span>
-                    </button>
                 </div>
 
                 <!-- 3 Stat Cards -->
@@ -121,10 +86,7 @@
                                 <span>Filter</span>
                             </button>
                         </form>
-                        <button type="button" class="w-full sm:w-auto px-3.5 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2 shadow-sm">
-                            <i class="fi fi-rr-download text-xs text-slate-400"></i>
-                            <span>Export</span>
-                        </button>
+                        <x-export-buttons report="anggota" />
                     </div>
 
                     <div class="overflow-x-auto">
@@ -203,111 +165,5 @@
         </div>
     </div>
 
-    <!-- MODAL TAMBAH ANGGOTA BARU -->
-    <div id="modalTambahAnggota" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-150">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                    <h3 class="text-base font-bold text-slate-800">Tambah anggota baru</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Lengkapi informasi anggota koperasi.</p>
-                </div>
-                <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-50 transition">
-                    <i class="fi fi-rr-cross-small text-base"></i>
-                </button>
-            </div>
-
-            <!-- Modal Form -->
-            <form action="{{ route('ketua.anggota.store') }}" method="POST" class="p-6 space-y-4">
-                @csrf
-                <!-- Nomor Anggota & Status -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nomor anggota <span class="text-rose-500">*</span></label>
-                        <input type="text" name="id_anggota" value="{{ $generatedId }}" required class="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Status <span class="text-rose-500">*</span></label>
-                        <select name="status" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                            <option value="Aktif">Aktif</option>
-                            <option value="Cuti">Cuti</option>
-                            <option value="Nonaktif">Nonaktif</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Nama Lengkap -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama lengkap <span class="text-rose-500">*</span></label>
-                    <input type="text" name="nama" required placeholder="Contoh: I Made Arya" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                </div>
-
-                <!-- NIK & Jenis Kelamin -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">NIK / NIM <span class="text-rose-500">*</span></label>
-                        <input type="text" name="nik" required placeholder="Masukkan nomor identitas" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Jenis kelamin <span class="text-rose-500">*</span></label>
-                        <select name="jenis_kelamin" required class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                            <option value="Laki-laki">Laki-laki</option>
-                            <option value="Perempuan">Perempuan</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Pekerjaan & Nomor Telepon -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Pekerjaan</label>
-                        <input type="text" name="pekerjaan" placeholder="Petani / Pedagang" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Nomor telepon <span class="text-rose-500">*</span></label>
-                        <input type="text" name="no_telepon" required placeholder="08xx-xxxx-xxxx" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                    </div>
-                </div>
-
-                <!-- Alamat -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Alamat <span class="text-rose-500">*</span></label>
-                    <input type="text" name="alamat" required placeholder="Alamat lengkap anggota" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                </div>
-
-                <!-- Email & Tanggal Bergabung -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-                        <input type="email" name="email" placeholder="nama@email.com" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition placeholder:text-slate-400">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal bergabung</label>
-                        <input type="date" name="created_at" value="{{ now()->format('Y-m-d') }}" class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition">
-                    </div>
-                </div>
-
-                <!-- Modal Actions -->
-                <div class="pt-4 flex items-center justify-end space-x-2 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
-                        Simpan anggota
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Script Modal -->
-    <script>
-        function openModal() {
-            document.getElementById('modalTambahAnggota').classList.remove('hidden');
-        }
-        function closeModal() {
-            document.getElementById('modalTambahAnggota').classList.add('hidden');
-        }
-    </script>
 </body>
 </html>

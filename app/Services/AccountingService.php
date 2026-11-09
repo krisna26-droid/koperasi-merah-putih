@@ -13,14 +13,21 @@ class AccountingService
     /**
      * Membuat Header dan Detail Jurnal Umum
      */
-    public function createJournalEntry(string $tanggal, ?string $referensi, string $tipeTransaksi, string $keterangan, array $details): JurnalUmum
+    public function createJournalEntry(string $tanggal, ?string $referensi, string $tipeTransaksi, string $keterangan, array $details, ?string $createdBy = null): JurnalUmum
     {
-        return DB::transaction(function () use ($tanggal, $referensi, $tipeTransaksi, $keterangan, $details) {
+        return DB::transaction(function () use ($tanggal, $referensi, $tipeTransaksi, $keterangan, $details, $createdBy) {
             // Validasi Keseimbangan (Debet = Kredit)
             $totalDebit = 0;
             $totalKredit = 0;
 
+            if ($details === []) {
+                throw new Exception('Jurnal harus memiliki sekurang-kurangnya satu baris debit dan kredit.');
+            }
+
             foreach ($details as $row) {
+                if (!in_array($row['posisi'] ?? null, ['Debit', 'Kredit'], true) || (float) ($row['nominal'] ?? 0) <= 0) {
+                    throw new Exception('Setiap baris jurnal harus memiliki posisi Debit/Kredit dan nominal lebih besar dari 0.');
+                }
                 if ($row['posisi'] === 'Debit') {
                     $totalDebit += (float) $row['nominal'];
                 } elseif ($row['posisi'] === 'Kredit') {
@@ -41,10 +48,11 @@ class AccountingService
             $jurnal = JurnalUmum::create([
                 'id_jurnal' => $idJurnal,
                 'tanggal' => $tanggal,
-                'referensi_transaksi' => $referensi,
+                'id_referensi' => $referensi,
                 'tipe_transaksi' => $tipeTransaksi,
                 'keterangan' => $keterangan,
                 'is_reversal' => false,
+                'created_by' => $createdBy ?? auth()->user()?->username,
             ]);
 
             // 2. Simpan Detail Jurnal
@@ -64,9 +72,9 @@ class AccountingService
     /**
      * Membalik jurnal (Reversal) secara otomatis dengan menukar Debit <-> Kredit
      */
-    public function reverseJournal(string $idJurnal, string $alasan = 'Koreksi Transaksi'): JurnalUmum
+    public function reverseJournal(string $idJurnal, string $alasan = 'Koreksi Transaksi', ?string $createdBy = null): JurnalUmum
     {
-        return DB::transaction(function () use ($idJurnal, $alasan) {
+        return DB::transaction(function () use ($idJurnal, $alasan, $createdBy) {
             $originalJournal = JurnalUmum::with('details')->findOrFail($idJurnal);
 
             if ($originalJournal->is_reversal) {
@@ -92,7 +100,8 @@ class AccountingService
                 $originalJournal->id_jurnal,
                 'Reversal',
                 "Reversal {$originalJournal->id_jurnal}: {$alasan} ({$originalJournal->keterangan})",
-                $reversedDetails
+                $reversedDetails,
+                $createdBy ?? auth()->user()?->username
             );
         });
     }

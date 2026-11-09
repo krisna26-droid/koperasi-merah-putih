@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pusat Laporan Operasional - Koperasi Merah Putih</title>
+    <title>Pusat Laporan Operasional - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -17,22 +17,7 @@
 
         <div class="flex-1 flex flex-col min-w-0">
             <!-- Header Navbar -->
-            <header class="bg-white border-b border-slate-100 py-3.5 px-8 flex items-center justify-between select-none">
-                <div class="flex items-center space-x-2 text-xs text-slate-400">
-                    <span>Koperasi Merah Putih</span>
-                    <span>&rsaquo;</span>
-                    <span class="text-slate-600 font-medium">Laporan Operasional</span>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs ring-2 ring-emerald-50">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                    </div>
-                    <div class="text-left">
-                        <p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name }}</p>
-                        <p class="text-[10px] text-slate-400">Admin Pengurus</p>
-                    </div>
-                </div>
-            </header>
+            <x-page-header title="Pusat Laporan Operasional" section="Laporan" />
 
             <main class="p-8 space-y-6">
                 <div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk - Koperasi Merah Putih</title>
+    <title>Masuk - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,12 +28,14 @@
             <!-- Brand Header -->
             <div class="relative z-10">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                        <i class="fi fi-sr-building text-xl flex items-center"></i>
-                    </div>
+                    @if($cooperativeSettings->logo_path)
+                        <img src="{{ route('cooperative.logo') }}?v={{ $cooperativeSettings->updated_at?->timestamp ?? time() }}" alt="Logo {{ $cooperativeSettings->name }}" class="h-10 w-10 rounded-xl bg-white object-contain p-1 shadow-lg">
+                    @else
+                        <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-500/20"><i class="fi fi-sr-building text-xl flex items-center"></i></div>
+                    @endif
                     <div>
-                        <h2 class="text-sm font-bold text-white tracking-wide">Koperasi Merah Putih</h2>
-                        <p class="text-xs text-slate-400">Desa Buruan · Gianyar</p>
+                        <h2 class="text-sm font-bold text-white tracking-wide">{{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</h2>
+                        <p class="text-xs text-slate-400">{{ $cooperativeSettings->address }}</p>
                     </div>
                 </div>
             </div>
@@ -54,7 +56,7 @@
                 </h1>
 
                 <p class="text-sm text-slate-400 mt-4 leading-relaxed">
-                    Satu ruang kerja untuk mengelola anggota, simpanan, pinjaman, hingga laporan keuangan Koperasi Merah Putih.
+                    Satu ruang kerja untuk mengelola anggota, simpanan, pinjaman, hingga laporan keuangan {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}.
                 </p>
 
                 <!-- Dynamic Quick Stats -->

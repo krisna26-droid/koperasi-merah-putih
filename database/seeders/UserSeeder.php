@@ -4,30 +4,47 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['username' => 'admin'],
+        $users = [
             [
-                'name' => 'Pengurus Operasional',
-                'email' => 'admin@koperasimerahputih.id',
-                'password' => Hash::make('password123'),
-                'peran' => 'Admin',
-            ]
-        );
-
-        User::updateOrCreate(
-            ['username' => 'ketua'],
-            [
+                'username' => 'ketua',
                 'name' => 'Ketua Koperasi',
                 'email' => 'ketua@koperasimerahputih.id',
-                'password' => Hash::make('password123'),
                 'peran' => 'Ketua',
-            ]
-        );
+            ],
+            [
+                'username' => 'pengurus',
+                'name' => 'Pengurus Operasional',
+                'email' => 'pengurus@koperasimerahputih.id',
+                'peran' => 'Admin',
+            ],
+            [
+                'username' => 'bendahara',
+                'name' => 'Bendahara Koperasi',
+                'email' => 'bendahara@koperasimerahputih.id',
+                'peran' => 'Admin',
+            ],
+            // Akun lama tetap disediakan agar referensi transaksi lama tidak yatim.
+            [
+                'username' => 'admin',
+                'name' => 'Admin Koperasi',
+                'email' => 'admin@koperasimerahputih.id',
+                'peran' => 'Admin',
+            ],
+        ];
+
+        foreach ($users as $user) {
+            User::updateOrCreate(
+                ['username' => $user['username']],
+                [
+                    ...$user,
+                    'password' => 'password123',
+                ]
+            );
+        }
     }
 }

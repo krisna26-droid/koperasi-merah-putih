@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Angsuran - Koperasi Merah Putih</title>
+    <title>Laporan Angsuran - {{ $cooperativeSettings->name ?? 'Koperasi Merah Putih' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,6 +24,7 @@
         </div>
 
         <div class="flex-1 flex flex-col min-w-0">
+            <x-page-header title="Laporan Angsuran" section="Laporan" print-hidden="true" />
             <main class="p-8 space-y-6">
                 <!-- Toolbar Filter & Tombol Print -->
                 <div class="no-print bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -45,17 +46,15 @@
                         <a href="{{ route('pengurus.laporan.index') }}" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200">
                             Kembali
                         </a>
-                        <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 flex items-center space-x-1.5">
-                            <i class="fi fi-rr-print"></i>
-                            <span>Cetak Laporan</span>
-                        </button>
+                        <x-export-buttons report="angsuran" />
                     </div>
                 </div>
 
                 <!-- Rekap Kop Surat -->
                 <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
                     <div class="text-center pb-4 border-b border-slate-100">
-                        <h2 class="text-lg font-extrabold text-slate-900">KOPERASI MERAH PUTIH DESA BURUAN</h2>
+                        <x-cooperative-print-brand />
+                        <h2 class="text-lg font-extrabold text-slate-900">{{ strtoupper($cooperativeSettings->name) }} · {{ $cooperativeSettings->address }}</h2>
                         <h3 class="text-sm font-bold text-slate-700 mt-0.5">LAPORAN PENERIMAAN ANGSURAN PINJAMAN</h3>
                         <p class="text-xs text-slate-400 mt-1">Periode: {{ \Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->translatedFormat('d M Y') }}</p>
                     </div>

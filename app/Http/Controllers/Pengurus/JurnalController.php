@@ -34,9 +34,10 @@ class JurnalController extends Controller
 
         $totalDebit = (float) JurnalDetail::where('posisi', 'Debit')->sum('nominal');
         $totalKredit = (float) JurnalDetail::where('posisi', 'Kredit')->sum('nominal');
+        $isLedgerBalanced = round($totalDebit, 2) === round($totalKredit, 2);
 
         // 2. Query Detail Jurnal dengan Filter
-        $query = JurnalDetail::with(['header', 'coa']);
+        $query = JurnalDetail::with(['header.creator', 'header.details', 'coa']);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -72,6 +73,7 @@ class JurnalController extends Controller
             'totalJurnalBulanIni',
             'totalDebit',
             'totalKredit',
+            'isLedgerBalanced',
             'jurnalDetails',
             'daftarAkun'
         ));
@@ -90,6 +92,8 @@ class JurnalController extends Controller
             'tanggal' => Carbon::parse($jurnal->tanggal)->translatedFormat('d F Y'),
             'keterangan' => $jurnal->keterangan,
             'is_reversal' => $jurnal->is_reversal,
+            'created_by' => $jurnal->created_by,
+            'creator_name' => $jurnal->creator?->name,
             'total_debit' => number_format($totalDebit, 0, ',', '.'),
             'total_kredit' => number_format($totalKredit, 0, ',', '.'),
             'is_balanced' => $isBalanced,
@@ -109,7 +113,7 @@ class JurnalController extends Controller
     {
         try {
             $alasan = $request->input('alasan', 'Koreksi Transaksi Pengurus');
-            $this->accountingService->reverseJournal($id, $alasan);
+            $this->accountingService->reverseJournal($id, $alasan, $request->user()?->username);
 
             return redirect()->route('pengurus.jurnal.index')->with('success', "Jurnal {$id} berhasil di-reversal dan dibuatkan jurnal pembalik.");
         } catch (Exception $e) {
