@@ -316,7 +316,10 @@
                                                 <td class="py-4 px-6 font-semibold text-slate-700">{{ $angsuran->id_angsuran }}</td>
                                                 <td class="py-4 px-6 text-slate-500 font-medium">{{ $angsuran->id_pinjam }}</td>
                                                 <td class="py-4 px-6 text-slate-600">Rp {{ number_format($angsuran->bayar_pokok, 0, ',', '.') }}</td>
-                                                <td class="py-4 px-6 text-slate-600">Rp {{ number_format($angsuran->bayar_bunga, 0, ',', '.') }}</td>
+                                                <td class="py-4 px-6 text-slate-600">
+                                                    Rp {{ number_format($angsuran->bayar_bunga, 0, ',', '.') }}
+                                                    <span class="block text-[10px] text-slate-400">{{ number_format((float) ($angsuran->pinjaman->bunga_rate ?? 0), 2, ',', '.') }}% / bulan</span>
+                                                </td>
                                                 <td class="py-4 px-6 font-bold text-slate-800">Rp {{ number_format($angsuran->total_bayar, 0, ',', '.') }}</td>
                                                 <td class="py-4 px-6 text-center">
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">

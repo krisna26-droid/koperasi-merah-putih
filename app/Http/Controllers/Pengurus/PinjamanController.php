@@ -33,7 +33,8 @@ class PinjamanController extends Controller
             $this->loanService->createApplication(
                 $request->id_anggota,
                 (float) $request->jumlah_pinjam,
-                (int) $request->tenor
+                (int) $request->tenor,
+                (float) $request->bunga_rate
             );
 
             return redirect()->route('pengurus.pinjaman.index')->with('success', 'Pengajuan pinjaman berhasil dikirim ke Ketua Koperasi.');

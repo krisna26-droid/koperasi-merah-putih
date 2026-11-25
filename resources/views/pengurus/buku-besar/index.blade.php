@@ -64,9 +64,7 @@
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold text-slate-400">Saldo awal</p>
-                            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">
-                                Rp {{ number_format($saldoAwal, 0, ',', '.') }}
-                            </h3>
+                            <h3 class="text-2xl font-extrabold mt-1"><x-signed-money :value="$saldoAwal" /></h3>
                         </div>
                         <div class="w-11 h-11 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                             <i class="fi fi-rr-bank text-xl"></i>
@@ -96,9 +94,7 @@
                     <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold text-slate-400">Saldo akhir</p>
-                            <h3 class="text-2xl font-extrabold text-emerald-600 mt-1">
-                                Rp {{ number_format($saldoAkhir, 0, ',', '.') }}
-                            </h3>
+                            <h3 class="text-2xl font-extrabold mt-1"><x-signed-money :value="$saldoAkhir" /></h3>
                         </div>
                         <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                             <i class="fi fi-rr-stats text-xl"></i>
@@ -137,8 +133,8 @@
                                     <td class="py-4 px-6">Saldo awal bulan {{ $startDate->translatedFormat('F') }}</td>
                                     <td class="py-4 px-6 text-right text-slate-400">-</td>
                                     <td class="py-4 px-6 text-right text-slate-400">-</td>
-                                    <td class="py-4 px-6 text-right font-extrabold text-slate-800 font-mono">
-                                        Rp {{ number_format($saldoAwal, 0, ',', '.') }}
+                                    <td class="py-4 px-6 text-right font-extrabold font-mono">
+                                        <x-signed-money :value="$saldoAwal" />
                                     </td>
                                 </tr>
 
@@ -154,8 +150,8 @@
                                         <td class="py-4 px-6 text-right font-bold text-slate-800 whitespace-nowrap font-mono">
                                             {{ $row['kredit'] > 0 ? 'Rp ' . number_format($row['kredit'], 0, ',', '.') : '-' }}
                                         </td>
-                                        <td class="py-4 px-6 text-right font-extrabold text-slate-900 whitespace-nowrap font-mono">
-                                            Rp {{ number_format($row['saldo'], 0, ',', '.') }}
+                                        <td class="py-4 px-6 text-right font-extrabold whitespace-nowrap font-mono">
+                                            <x-signed-money :value="$row['saldo']" />
                                         </td>
                                     </tr>
                                 @empty
@@ -173,7 +169,7 @@
                                     <td colspan="4" class="px-6 py-4 text-right">TOTAL MUTASI PERIODE</td>
                                     <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($totalDebitPeriode, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($totalKreditPeriode, 0, ',', '.') }}</td>
-                                    <td class="px-6 py-4 text-right font-mono">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 text-right font-mono"><x-signed-money :value="$saldoAkhir" /></td>
                                 </tr>
                             </tfoot>
                         </table>

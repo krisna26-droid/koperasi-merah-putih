@@ -21,8 +21,10 @@ class LoanService
     /**
      * 1. Pengajuan Pinjaman Baru
      */
-    public function createApplication(string $idAnggota, float $jumlahPinjam, int $tenor): Pinjaman
+    public function createApplication(string $idAnggota, float $jumlahPinjam, int $tenor, ?float $rateBunga = null): Pinjaman
     {
+        $rateBunga ??= (float) app(CooperativeIdentity::class)->current()->default_loan_interest_rate;
+
         $anggota = Anggota::findOrFail($idAnggota);
         if ($anggota->status !== 'Aktif') {
             throw new Exception("Pengajuan ditolak: Anggota [{$idAnggota}] tidak berstatus Aktif!");
@@ -36,11 +38,10 @@ class LoanService
             throw new Exception("Pengajuan ditolak: Anggota [{$idAnggota}] masih memiliki pinjaman yang berstatus 'Berjalan'!");
         }
 
-        if ($jumlahPinjam <= 0 || $tenor <= 0) {
-            throw new Exception("Jumlah pinjaman dan tenor harus lebih besar dari 0!");
+        if ($jumlahPinjam <= 0 || $tenor <= 0 || $rateBunga < 0 || $rateBunga > 100) {
+            throw new Exception("Jumlah pinjaman dan tenor harus lebih besar dari 0, sedangkan bunga harus di antara 0% dan 100% per bulan!");
         }
 
-        $rateBunga = 1.50; // Flat 1.5%
         $pokokPerBulan = round($jumlahPinjam / $tenor, 2);
         $bungaPerBulan = round($jumlahPinjam * ($rateBunga / 100), 2);
 
@@ -133,7 +134,7 @@ class LoanService
                 throw new Exception("Transaksi Angsuran ditolak: Pinjaman [{$idPinjam}] tidak berstatus 'Berjalan'!");
             }
 
-            $bayarPokok = $pinjaman->pokok_per_bulan;
+            $bayarPokok = min((float) $pinjaman->pokok_per_bulan, (float) $pinjaman->sisa_tagihan);
             $bayarBunga = $pinjaman->bunga_per_bulan;
             $totalBayar = round($bayarPokok + $bayarBunga, 2);
 
@@ -174,8 +175,10 @@ class LoanService
             $journalDetails = [
                 ['kode_akun' => '101', 'posisi' => 'Debit', 'nominal' => $totalBayar],
                 ['kode_akun' => '103', 'posisi' => 'Kredit', 'nominal' => $bayarPokok],
-                ['kode_akun' => '401', 'posisi' => 'Kredit', 'nominal' => $bayarBunga],
             ];
+            if ($bayarBunga > 0) {
+                $journalDetails[] = ['kode_akun' => '401', 'posisi' => 'Kredit', 'nominal' => $bayarBunga];
+            }
 
             $this->accountingService->createJournalEntry(
                 now()->format('Y-m-d'),

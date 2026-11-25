@@ -28,6 +28,8 @@
                             <th class="p-4">Nama Anggota</th>
                             <th class="p-4">Plafond Pokok</th>
                             <th class="p-4">Tenor</th>
+                            <th class="p-4 text-right">Bunga / Bulan</th>
+                            <th class="p-4 text-right">Angsuran / Bulan</th>
                             <th class="p-4">Aksi Approval</th>
                         </tr>
                     </thead>
@@ -38,6 +40,11 @@
                             <td class="p-4">{{ $item->anggota->nama }}</td>
                             <td class="p-4 font-semibold">Rp {{ number_format($item->jumlah_pinjam, 2, ',', '.') }}</td>
                             <td class="p-4">{{ $item->tenor }} Bulan</td>
+                            <td class="p-4 text-right">
+                                <strong>{{ number_format((float) $item->bunga_rate, 2, ',', '.') }}%</strong>
+                                <span class="block text-xs text-slate-500">Rp {{ number_format($item->bunga_per_bulan, 0, ',', '.') }}</span>
+                            </td>
+                            <td class="p-4 text-right font-semibold">Rp {{ number_format($item->pokok_per_bulan + $item->bunga_per_bulan, 0, ',', '.') }}</td>
                             <td class="p-4 flex space-x-2">
                                 <form action="{{ route('ketua.approval.approve', $item->id_pinjam) }}" method="POST">
                                     @csrf
@@ -55,7 +62,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-slate-400">Tidak ada pengajuan pinjaman baru yang menunggu persetujuan.</td>
+                            <td colspan="7" class="p-4 text-center text-slate-400">Tidak ada pengajuan pinjaman baru yang menunggu persetujuan.</td>
                         </tr>
                         @endforelse
                     </tbody>

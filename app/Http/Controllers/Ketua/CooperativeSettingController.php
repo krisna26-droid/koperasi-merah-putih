@@ -22,6 +22,7 @@ class CooperativeSettingController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'address' => ['required', 'string', 'max:1000'],
+            'default_loan_interest_rate' => ['required', 'numeric', 'min:0', 'max:100'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'remove_logo' => ['sometimes', 'boolean'],
         ]);
@@ -38,6 +39,7 @@ class CooperativeSettingController extends Controller
         $settings->fill([
             'name' => $validated['name'],
             'address' => $validated['address'],
+            'default_loan_interest_rate' => $validated['default_loan_interest_rate'],
         ]);
 
         if ($newLogo !== null) {

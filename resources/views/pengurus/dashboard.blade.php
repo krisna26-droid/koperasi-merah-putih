@@ -229,7 +229,7 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs font-extrabold text-slate-800">+Rp {{ number_format($trx->nominal, 0, ',', '.') }}</p>
+                                        <p class="text-xs font-extrabold"><x-signed-money :value="$trx->nominal" show-sign /></p>
                                         <span class="inline-block px-2 py-0.5 mt-0.5 text-[10px] font-bold rounded-full {{ $trx->is_jurnaled ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
                                             {{ $trx->is_jurnaled ? 'Selesai' : 'Pending' }}
                                         </span>

@@ -58,7 +58,7 @@
                             @forelse($data['pendapatan'] as $p)
                                 <div class="flex justify-between items-center py-1">
                                     <span class="text-slate-700 pl-4">{{ $p['kode_akun'] }} &mdash; {{ $p['nama_akun'] }}</span>
-                                    <span class="font-mono font-medium text-slate-800">Rp {{ number_format($p['nominal'], 0, ',', '.') }}</span>
+                                    <x-signed-money :value="$p['nominal']" class="font-medium" />
                                 </div>
                             @empty
                                 <p class="text-xs text-slate-400 italic pl-4">Tidak ada pendapatan pada periode ini.</p>
@@ -77,7 +77,7 @@
                             @forelse($data['beban'] as $b)
                                 <div class="flex justify-between items-center py-1">
                                     <span class="text-slate-700 pl-4">{{ $b['kode_akun'] }} &mdash; {{ $b['nama_akun'] }}</span>
-                                    <span class="font-mono font-medium text-slate-800">Rp {{ number_format($b['nominal'], 0, ',', '.') }}</span>
+                                    <x-signed-money :value="$b['nominal']" class="font-medium" />
                                 </div>
                             @empty
                                 <p class="text-xs text-slate-400 italic pl-4">Tidak ada pencatatan beban operasional.</p>
@@ -92,7 +92,7 @@
                     <!-- 3. Sisa Hasil Usaha (SHU) Bersih -->
                     <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/60 flex justify-between items-center text-sm font-extrabold text-emerald-950">
                         <span>SISA HASIL USAHA (SHU) BERSIH TAHUN BERJALAN</span>
-                        <span class="font-mono text-base text-emerald-700">Rp {{ number_format($data['shu_bersih'], 0, ',', '.') }}</span>
+                        <x-signed-money :value="$data['shu_bersih']" class="text-base" />
                     </div>
                 </div>
             </main>

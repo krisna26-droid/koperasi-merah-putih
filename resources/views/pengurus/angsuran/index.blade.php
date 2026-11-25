@@ -62,10 +62,11 @@
                                         <option value="{{ $item->id_pinjam }}" 
                                             data-pokok="{{ $item->pokok_per_bulan }}" 
                                             data-bunga="{{ $item->bunga_per_bulan }}" 
+                                            data-rate="{{ $item->bunga_rate }}"
                                             data-sisa="{{ $item->sisa_tagihan }}"
                                             data-total="{{ $item->pokok_per_bulan + $item->bunga_per_bulan }}"
                                             {{ old('id_pinjam') === $item->id_pinjam ? 'selected' : '' }}>
-                                            {{ $item->id_pinjam }} - {{ $item->anggota->nama ?? $item->id_anggota }} (Sisa Pokok: Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }})
+                                            {{ $item->id_pinjam }} - {{ $item->anggota->nama ?? $item->id_anggota }} (Bunga {{ number_format((float) $item->bunga_rate, 2, ',', '.') }}%/bln · Sisa Pokok: Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -92,7 +93,7 @@
                                 <span id="preview_pokok" class="font-bold text-slate-800 text-xs">Rp 0</span>
                             </div>
                             <div>
-                                <span class="text-slate-400 block text-[11px]">Porsi Bunga (1.5%):</span>
+                                <span class="text-slate-400 block text-[11px]">Porsi Bunga (<span id="preview_bunga_rate">0,00</span>%/bln):</span>
                                 <span id="preview_bunga" class="font-bold text-slate-800 text-xs">Rp 0</span>
                             </div>
                             <div>
@@ -120,7 +121,7 @@
                                     <th class="py-3.5 px-5">ID Pinjam</th>
                                     <th class="py-3.5 px-5">Angsuran Ke</th>
                                     <th class="py-3.5 px-5">Porsi Pokok</th>
-                                    <th class="py-3.5 px-5">Porsi Bunga (1.5%)</th>
+                                    <th class="py-3.5 px-5">Porsi Bunga</th>
                                     <th class="py-3.5 px-5">Total Pembayaran</th>
                                     <th class="py-3.5 px-5 text-right">Status Jurnal</th>
                                 </tr>
@@ -144,6 +145,7 @@
                                         </td>
                                         <td class="py-3.5 px-5 text-slate-500">
                                             Rp {{ number_format($item->bayar_bunga, 0, ',', '.') }}
+                                            <span class="block text-[10px] text-slate-400">{{ number_format((float) ($item->pinjaman->bunga_rate ?? 0), 2, ',', '.') }}% / bulan</span>
                                         </td>
                                         <td class="py-3.5 px-5 font-extrabold text-emerald-700">
                                             Rp {{ number_format($item->total_bayar, 0, ',', '.') }}
@@ -181,6 +183,7 @@
         const previewPokok = document.getElementById('preview_pokok');
         const previewBunga = document.getElementById('preview_bunga');
         const previewTotal = document.getElementById('preview_total');
+        const previewBungaRate = document.getElementById('preview_bunga_rate');
 
         function formatRupiah(num) {
             return 'Rp ' + Math.round(num).toLocaleString('id-ID');
@@ -190,6 +193,7 @@
             const selected = selectPinjam.options[selectPinjam.selectedIndex];
             const pokok = parseFloat(selected.getAttribute('data-pokok')) || 0;
             const bunga = parseFloat(selected.getAttribute('data-bunga')) || 0;
+            const rate = parseFloat(selected.getAttribute('data-rate')) || 0;
             const sisa = parseFloat(selected.getAttribute('data-sisa')) || 0;
             const total = parseFloat(selected.getAttribute('data-total')) || 0;
 
@@ -197,6 +201,7 @@
             previewPokok.innerText = formatRupiah(pokok);
             previewBunga.innerText = formatRupiah(bunga);
             previewTotal.innerText = formatRupiah(total);
+            previewBungaRate.innerText = rate.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         selectPinjam.addEventListener('change', updatePreview);

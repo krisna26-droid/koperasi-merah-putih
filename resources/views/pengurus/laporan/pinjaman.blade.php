@@ -77,6 +77,7 @@
                                     <th class="p-3">Tanggal</th>
                                     <th class="p-3">Anggota</th>
                                     <th class="p-3">Tenor</th>
+                                    <th class="p-3 text-right">Bunga / Bulan</th>
                                     <th class="p-3 text-right">Plafond (Rp)</th>
                                     <th class="p-3 text-right">Sisa Pokok (Rp)</th>
                                     <th class="p-3 text-center">Status</th>
@@ -89,19 +90,20 @@
                                         <td class="p-3 font-mono">{{ $row->created_at->format('d/m/Y') }}</td>
                                         <td class="p-3 font-bold text-slate-800">{{ $row->anggota->nama ?? '-' }}</td>
                                         <td class="p-3">{{ $row->tenor }} Bulan</td>
+                                        <td class="p-3 text-right font-mono">{{ number_format((float) $row->bunga_rate, 2, ',', '.') }}%</td>
                                         <td class="p-3 text-right font-mono font-bold text-slate-800">{{ number_format($row->jumlah_pinjam, 0, ',', '.') }}</td>
                                         <td class="p-3 text-right font-mono font-bold text-slate-800">{{ number_format($row->sisa_tagihan, 0, ',', '.') }}</td>
                                         <td class="p-3 text-center font-semibold">{{ $row->status }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="p-4 text-center text-slate-400">Tidak ada data pinjaman pada periode ini.</td>
+                                        <td colspan="8" class="p-4 text-center text-slate-400">Tidak ada data pinjaman pada periode ini.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
                             <tfoot>
                                 <tr class="bg-slate-50 font-bold border-t border-slate-200 text-slate-800">
-                                    <td colspan="4" class="p-3 text-right">TOTAL OUTSTANDING BERJALAN:</td>
+                                    <td colspan="5" class="p-3 text-right">TOTAL OUTSTANDING BERJALAN:</td>
                                     <td colspan="3" class="p-3 text-right font-mono text-emerald-700">Rp {{ number_format($totalSisaTagihan, 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>

@@ -22,7 +22,7 @@ class AngsuranController extends Controller
 
     public function index(): View
     {
-        $angsuran = Angsuran::latest()->paginate(10);
+        $angsuran = Angsuran::with('pinjaman')->latest()->paginate(10);
         $pinjamanBerjalan = Pinjaman::with('anggota')
             ->where('status', 'Berjalan')
             ->orderBy('id_pinjam', 'asc')

@@ -42,6 +42,13 @@
                         @error('address')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
 
+                    <div>
+                        <label for="default_loan_interest_rate" class="mb-1.5 block text-xs font-bold text-slate-700">Bunga default pinjaman (% per bulan)</label>
+                        <input id="default_loan_interest_rate" name="default_loan_interest_rate" type="number" min="0" max="100" step="0.01" value="{{ old('default_loan_interest_rate', $settings->default_loan_interest_rate) }}" required class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20">
+                        <p class="mt-1 text-[11px] text-slate-400">Tarif ini menjadi nilai awal pengajuan baru. Tarif pada pinjaman yang sudah diajukan tetap tersimpan sesuai transaksi tersebut.</p>
+                        @error('default_loan_interest_rate')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+
                     <div class="space-y-3">
                         <label for="logo" class="block text-xs font-bold text-slate-700">Logo koperasi</label>
                         @if($settings->logo_path)

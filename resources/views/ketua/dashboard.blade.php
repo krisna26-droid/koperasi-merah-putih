@@ -241,7 +241,7 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs font-extrabold text-slate-800">+Rp {{ number_format($tx->nominal, 0, ',', '.') }}</p>
+                                        <p class="text-xs font-extrabold"><x-signed-money :value="$tx->nominal" show-sign /></p>
                                         <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Selesai</span>
                                     </div>
                                 </div>

@@ -17,6 +17,7 @@ class StorePinjamanRequest extends FormRequest
             'id_anggota' => ['required', 'exists:tb_anggota,id_anggota'],
             'jumlah_pinjam' => ['required', 'numeric', 'min:100000'],
             'tenor' => ['required', 'integer', 'min:1', 'max:60'],
+            'bunga_rate' => ['required', 'numeric', 'min:0', 'max:100'],
         ];
     }
 }

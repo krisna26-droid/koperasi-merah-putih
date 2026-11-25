@@ -142,6 +142,7 @@
                                         </td>
                                         <td class="py-4 px-6 text-slate-600">
                                             Rp {{ number_format($item->bayar_bunga, 0, ',', '.') }}
+                                            <span class="block text-[10px] text-slate-400">{{ number_format((float) ($item->pinjaman->bunga_rate ?? 0), 2, ',', '.') }}% / bulan</span>
                                         </td>
                                         <td class="py-4 px-6 font-bold text-slate-800">
                                             Rp {{ number_format($item->total_bayar, 0, ',', '.') }}

@@ -137,7 +137,7 @@ class ReportExportService
 
         return [
             'title' => $this->periodTitle('Laporan Angsuran', $request),
-            'headers' => ['ID Angsuran', 'Tanggal Bayar', 'ID Pinjaman', 'ID Anggota', 'Nama Anggota', 'Angsuran Ke', 'Pokok (Rp)', 'Bunga (Rp)', 'Total Bayar (Rp)', 'Status Jurnal', 'Dicatat oleh'],
+            'headers' => ['ID Angsuran', 'Tanggal Bayar', 'ID Pinjaman', 'ID Anggota', 'Nama Anggota', 'Angsuran Ke', 'Pokok (Rp)', 'Tarif Bunga (%/bulan)', 'Bunga (Rp)', 'Total Bayar (Rp)', 'Status Jurnal', 'Dicatat oleh'],
             'rows' => $query->latest('created_at')->get()->map(fn (Angsuran $item) => [
                 $item->id_angsuran,
                 $item->created_at?->format('Y-m-d'),
@@ -146,6 +146,7 @@ class ReportExportService
                 $item->anggota?->nama,
                 (int) $item->angsuran_ke,
                 (float) $item->bayar_pokok,
+                (float) ($item->pinjaman?->bunga_rate ?? 0),
                 (float) $item->bayar_bunga,
                 (float) $item->total_bayar,
                 $item->is_jurnaled ? 'Terjurnal' : 'Belum dijurnal',

@@ -107,7 +107,8 @@
                                 </div>
                                 <div>
                                     <p class="text-slate-400">Bunga per bulan</p>
-                                    <p class="text-base font-extrabold text-slate-800 mt-0.5">1.5%</p>
+                                    <p class="text-base font-extrabold text-slate-800 mt-0.5">{{ number_format((float) $pinjaman->bunga_rate, 2, ',', '.') }}% <span class="text-xs font-normal text-slate-500">per bulan (flat)</span></p>
+                                    <p class="text-xs text-slate-500">Rp {{ number_format($pinjaman->bunga_per_bulan, 0, ',', '.') }} per angsuran</p>
                                 </div>
                                 <div>
                                     <p class="text-slate-400">Tenor</p>
@@ -116,6 +117,10 @@
                                 <div>
                                     <p class="text-slate-400">Angsuran per bulan</p>
                                     <p class="text-base font-extrabold text-emerald-600 mt-0.5">Rp {{ number_format($pinjaman->pokok_per_bulan + $pinjaman->bunga_per_bulan, 0, ',', '.') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400">Total bunga selama tenor</p>
+                                    <p class="text-base font-extrabold text-slate-800 mt-0.5">Rp {{ number_format($pinjaman->bunga_per_bulan * $pinjaman->tenor, 0, ',', '.') }}</p>
                                 </div>
                                 <div>
                                     <p class="text-slate-400">Tanggal pengajuan</p>

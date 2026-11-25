@@ -80,7 +80,10 @@
                                         <td class="p-3 font-mono">{{ $row->id_pinjam }}</td>
                                         <td class="p-3 font-bold text-slate-800">{{ $row->pinjaman->anggota->nama ?? '-' }}</td>
                                         <td class="p-3 text-right font-mono">{{ number_format($row->bayar_pokok, 0, ',', '.') }}</td>
-                                        <td class="p-3 text-right font-mono">{{ number_format($row->bayar_bunga, 0, ',', '.') }}</td>
+                                        <td class="p-3 text-right font-mono">
+                                            {{ number_format($row->bayar_bunga, 0, ',', '.') }}
+                                            <span class="block text-[10px] text-slate-400">{{ number_format((float) ($row->pinjaman->bunga_rate ?? 0), 2, ',', '.') }}% / bulan</span>
+                                        </td>
                                         <td class="p-3 text-right font-mono font-bold text-emerald-700">{{ number_format($row->total_bayar, 0, ',', '.') }}</td>
                                     </tr>
                                 @empty

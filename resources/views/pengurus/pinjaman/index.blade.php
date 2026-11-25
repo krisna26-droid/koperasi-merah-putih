@@ -47,13 +47,13 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-extrabold text-slate-800">Formulir Permohonan Pinjaman</h3>
-                            <p class="text-xs text-slate-400">Sistem memberlakukan aturan <em>Single Active Loan</em> dan bunga tetap 1.5% per bulan.</p>
+                            <p class="text-xs text-slate-400">Bunga dihitung flat per bulan atas pokok awal. Tarif dapat disesuaikan untuk setiap pengajuan.</p>
                         </div>
                     </div>
 
                     <form action="{{ route('pengurus.pinjaman.store') }}" method="POST" class="space-y-4">
                         @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Pilih Anggota</label>
                                 <select name="id_anggota" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-medium text-slate-800 transition" required>
@@ -84,13 +84,21 @@
                                     <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            <div>
+                                <label for="input_bunga_rate" class="block text-xs font-bold text-slate-700 mb-1.5">Bunga Pinjaman (% per bulan)</label>
+                                <input type="number" id="input_bunga_rate" name="bunga_rate" class="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-medium text-slate-800 transition" placeholder="Contoh: 1.50" min="0" max="100" step="0.01" value="{{ old('bunga_rate', $cooperativeSettings->default_loan_interest_rate) }}" required>
+                                @error('bunga_rate')
+                                    <p class="text-[11px] text-rose-500 mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
 
                         <div class="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-wrap items-center justify-between text-xs gap-4">
                             <div class="flex items-center space-x-6">
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Suku Bunga:</span>
-                                    <span class="font-bold text-slate-700">1.50% / Bulan (Tetap)</span>
+                                    <span id="preview_rate" class="font-bold text-slate-700">{{ number_format((float) old('bunga_rate', $cooperativeSettings->default_loan_interest_rate), 2, ',', '.') }}% / Bulan</span>
                                 </div>
                                 <div>
                                     <span class="text-slate-400 block text-[11px]">Estimasi Pokok / Bln:</span>
@@ -133,7 +141,7 @@
                                     <th class="py-3.5 px-5">Anggota</th>
                                     <th class="py-3.5 px-5">Plafond Pokok</th>
                                     <th class="py-3.5 px-5">Tenor</th>
-                                    <th class="py-3.5 px-5">Bunga / Bln (1.5%)</th>
+                                    <th class="py-3.5 px-5">Bunga / Bln</th>
                                     <th class="py-3.5 px-5">Sisa Kewajiban</th>
                                     <th class="py-3.5 px-5 text-right">Status</th>
                                 </tr>
@@ -156,6 +164,7 @@
                                         </td>
                                         <td class="py-3.5 px-5 text-slate-500 font-medium">
                                             Rp {{ number_format($item->bunga_per_bulan, 0, ',', '.') }}
+                                            <span class="block text-[10px] text-slate-400">{{ number_format((float) $item->bunga_rate, 2, ',', '.') }}% / bulan</span>
                                         </td>
                                         <td class="py-3.5 px-5 font-bold text-slate-800">
                                             Rp {{ number_format($item->sisa_tagihan, 0, ',', '.') }}
@@ -194,9 +203,11 @@
     <script>
         const inputJumlah = document.getElementById('input_jumlah_pinjam');
         const inputTenor = document.getElementById('input_tenor');
+        const inputBungaRate = document.getElementById('input_bunga_rate');
         const previewPokok = document.getElementById('preview_pokok');
         const previewBunga = document.getElementById('preview_bunga');
         const previewTotal = document.getElementById('preview_total');
+        const previewRate = document.getElementById('preview_rate');
 
         function formatRupiah(number) {
             return 'Rp ' + Math.round(number).toLocaleString('id-ID');
@@ -205,10 +216,12 @@
         function calculateInstallment() {
             const jumlah = parseFloat(inputJumlah.value) || 0;
             const tenor = parseInt(inputTenor.value) || 0;
+            const rate = parseFloat(inputBungaRate.value) || 0;
+            previewRate.innerText = rate.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '% / Bulan';
 
             if (jumlah > 0 && tenor > 0) {
                 const pokok = jumlah / tenor;
-                const bunga = jumlah * 0.015;
+                const bunga = jumlah * (rate / 100);
                 const total = pokok + bunga;
 
                 previewPokok.innerText = formatRupiah(pokok);
@@ -223,6 +236,8 @@
 
         inputJumlah.addEventListener('input', calculateInstallment);
         inputTenor.addEventListener('input', calculateInstallment);
+        inputBungaRate.addEventListener('input', calculateInstallment);
+        calculateInstallment();
     </script>
 </body>
 </html>
